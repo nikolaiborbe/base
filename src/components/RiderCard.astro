@@ -1,0 +1,281 @@
+---
+import type { Rider, SkillKey } from "../data/types";
+import { SKILL_LABELS, SKILL_COLORS, SPECIALTY_LABELS } from "../data/types";
+import { computeOverall, getInitials, nameToColor } from "../data/utils";
+import SkillBar from "./SkillBar.astro";
+import SkillRadar from "./SkillRadar.astro";
+
+interface Props {
+  rider: Rider;
+}
+
+const { rider } = Astro.props;
+const overall = computeOverall(rider.skills);
+const initials = getInitials(rider.name);
+const avatarColor = nameToColor(rider.name);
+const skillKeys = Object.keys(SKILL_LABELS) as SkillKey[];
+
+const overallClass = overall >= 90 ? "gold" : overall >= 80 ? "high" : "normal";
+---
+
+<div
+  class="rider-card"
+  data-rider
+  data-name={rider.name}
+  data-team={rider.team}
+  data-specialty={rider.specialty}
+>
+  <div class="card-main">
+    <div class="card-header">
+      <div class="avatar" style={`background: ${avatarColor};`}>
+        {initials}
+      </div>
+      <div class="info">
+        <h3 class="name">{rider.nationality} {rider.name}</h3>
+        <p class="team">{rider.team}</p>
+        <span class={`specialty-badge ${rider.specialty}`}>
+          {SPECIALTY_LABELS[rider.specialty]}
+        </span>
+      </div>
+      <div class={`overall ${overallClass}`}>
+        {overall}
+      </div>
+    </div>
+
+    <div class="skills">
+      {skillKeys.map((key) => (
+        <SkillBar label={SKILL_LABELS[key]} value={rider.skills[key]} color={SKILL_COLORS[key]} />
+      ))}
+    </div>
+
+    <button class="expand-btn" aria-label="Show more details">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="card-expanded">
+    <div class="expanded-content">
+      <div class="radar-container">
+        <SkillRadar skills={rider.skills} size={200} />
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Age</span>
+          <span class="stat-value">{rider.age}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Height</span>
+          <span class="stat-value">{rider.height} cm</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Weight</span>
+          <span class="stat-value">{rider.weight} kg</span>
+        </div>
+        {rider.grandTourWins > 0 && (
+          <div class="stat highlight">
+            <span class="stat-label">GT Wins</span>
+            <span class="stat-value">{rider.grandTourWins}</span>
+          </div>
+        )}
+        {rider.monumentWins > 0 && (
+          <div class="stat highlight">
+            <span class="stat-label">Monuments</span>
+            <span class="stat-value">{rider.monumentWins}</span>
+          </div>
+        )}
+        <div class="stat">
+          <span class="stat-label">Nationality</span>
+          <span class="stat-value">{rider.nationalityName}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .rider-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.25s ease;
+  }
+
+  .rider-card:hover {
+    border-color: rgba(255, 215, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-main {
+    padding: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .team {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .specialty-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+  }
+
+  .specialty-badge.gc { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+  .specialty-badge.sprinter { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+  .specialty-badge.classics { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  .specialty-badge.tt { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+  .specialty-badge.allrounder { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+  .specialty-badge.domestique { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+
+  .overall {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .overall.gold { color: var(--accent); }
+  .overall.high { color: var(--text-primary); }
+  .overall.normal { color: var(--text-secondary); }
+
+  .skills {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .expand-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px;
+    margin-top: 12px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 6px;
+  }
+
+  .expand-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--accent);
+  }
+
+  .rider-card.expanded .expand-btn svg {
+    transform: rotate(180deg);
+  }
+
+  .card-expanded {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+
+  .rider-card.expanded .card-expanded {
+    max-height: 400px;
+  }
+
+  .expanded-content {
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding-top: 16px;
+  }
+
+  .radar-container {
+    flex-shrink: 0;
+  }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .stat {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 80px;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .stat.highlight .stat-value {
+    color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .expanded-content {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>

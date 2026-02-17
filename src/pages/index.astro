@@ -1,48 +1,131 @@
 ---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import SearchBar from "../components/SearchBar.astro";
+import RiderCard from "../components/RiderCard.astro";
+import Footer from "../components/Footer.astro";
+import { riders } from "../data/riders";
+import { sortByOverall } from "../data/utils";
 
+const sortedRiders = sortByOverall(riders);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<title>base</title>
-	</head>
-	<body>
-		<main>
-			<h1>base</h1>
-			<p>Nothing here yet.</p>
-		</main>
-	</body>
-</html>
+<BaseLayout title="Peloton — Pro Cycling Skills">
+  <Header />
+  <SearchBar />
+
+  <main>
+    <div class="rider-grid" id="rider-grid">
+      {sortedRiders.map((rider) => (
+        <RiderCard rider={rider} />
+      ))}
+    </div>
+
+    <div class="no-results" id="no-results">
+      <p>No riders found matching your search.</p>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
 
 <style>
-	html, body {
-		margin: 0;
-		padding: 0;
-		height: 100%;
-		font-family: system-ui, -apple-system, sans-serif;
-		color: #111;
-		background: #fafafa;
-	}
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
 
-	main {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		min-height: 100vh;
-	}
+  .rider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
 
-	h1 {
-		font-size: 2rem;
-		font-weight: 600;
-		margin: 0 0 0.5rem;
-	}
+  .no-results {
+    display: none;
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
 
-	p {
-		color: #666;
-		margin: 0;
-	}
+  .no-results.visible {
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    main {
+      padding: 0 16px;
+    }
+
+    .rider-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
+
+<script>
+  function init() {
+    const searchInput = document.getElementById("search") as HTMLInputElement;
+    const riderCount = document.getElementById("rider-count") as HTMLSpanElement;
+    const noResults = document.getElementById("no-results") as HTMLDivElement;
+    const cards = document.querySelectorAll<HTMLDivElement>("[data-rider]");
+    const filterButtons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
+
+    let activeFilter = "all";
+    let searchQuery = "";
+
+    function updateDisplay() {
+      let visible = 0;
+
+      cards.forEach((card) => {
+        const name = (card.dataset.name ?? "").toLowerCase();
+        const team = (card.dataset.team ?? "").toLowerCase();
+        const specialty = card.dataset.specialty ?? "";
+
+        const matchesSearch =
+          searchQuery === "" ||
+          name.includes(searchQuery) ||
+          team.includes(searchQuery);
+        const matchesFilter =
+          activeFilter === "all" || specialty === activeFilter;
+
+        const show = matchesSearch && matchesFilter;
+        card.style.display = show ? "" : "none";
+        if (show) visible++;
+      });
+
+      riderCount.textContent = `${visible}`;
+      noResults.classList.toggle("visible", visible === 0);
+    }
+
+    searchInput.addEventListener("input", () => {
+      searchQuery = searchInput.value.toLowerCase().trim();
+      updateDisplay();
+    });
+
+    filterButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter ?? "all";
+        filterButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateDisplay();
+      });
+    });
+
+    // Expand/collapse cards
+    cards.forEach((card) => {
+      const expandBtn = card.querySelector(".expand-btn");
+      expandBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        card.classList.toggle("expanded");
+      });
+    });
+
+    // Initial count
+    riderCount.textContent = `${cards.length}`;
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+</script>
