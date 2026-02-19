@@ -1,885 +1,287 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+interface Meme {
+  top: string;
+  bottom: string;
+  bg: string;
+  emoji: string;
+}
+
+const memes: Meme[] = [
+  {
+    top: "WORKS ON MY MACHINE",
+    bottom: "SHIPS IT TO PRODUCTION",
+    bg: "linear-gradient(135deg, #1a1a2e, #16213e)",
+    emoji: "🔥",
+  },
+  {
+    top: "99 LITTLE BUGS IN THE CODE",
+    bottom: "TAKE ONE DOWN, PATCH IT AROUND... 127 LITTLE BUGS IN THE CODE",
+    bg: "linear-gradient(135deg, #2d1b4e, #1a1a2e)",
+    emoji: "🐛",
+  },
+  {
+    top: "SENIOR DEV: DON'T WORRY, IT'S A SIMPLE FIX",
+    bottom: "3 SPRINTS LATER...",
+    bg: "linear-gradient(135deg, #1b2838, #0f2027)",
+    emoji: "💀",
+  },
+  {
+    top: "git commit -m \"fixed it\"",
+    bottom: "NARRATOR: HE DID NOT FIX IT",
+    bg: "linear-gradient(135deg, #1a1a2e, #2d1b4e)",
+    emoji: "📖",
+  },
+  {
+    top: "STACKOVERFLOW IS DOWN",
+    bottom: "GUESS I'LL DIE",
+    bg: "linear-gradient(135deg, #0f2027, #203a43)",
+    emoji: "☠️",
+  },
+  {
+    top: "\"WE DON'T NEED TESTS\"",
+    bottom: "— FAMOUS LAST WORDS BEFORE EVERY PRODUCTION INCIDENT",
+    bg: "linear-gradient(135deg, #2d1b4e, #0f2027)",
+    emoji: "🧪",
+  },
+  {
+    top: "MY CODE DOESN'T WORK",
+    bottom: "I HAVE NO IDEA WHY. MY CODE WORKS. I HAVE NO IDEA WHY.",
+    bg: "linear-gradient(135deg, #1a1a2e, #16213e)",
+    emoji: "🤷",
+  },
+  {
+    top: "\"I'LL REFACTOR THIS LATER\"",
+    bottom: "THE CODE 5 YEARS LATER: STILL THERE",
+    bg: "linear-gradient(135deg, #16213e, #1b2838)",
+    emoji: "🏚️",
+  },
+  {
+    top: "DOCUMENTATION?",
+    bottom: "THE CODE IS SELF-DOCUMENTING",
+    bg: "linear-gradient(135deg, #203a43, #1a1a2e)",
+    emoji: "📝",
+  },
+  {
+    top: "WHEN THE INTERN PUSHES DIRECTLY TO MAIN",
+    bottom: "",
+    bg: "linear-gradient(135deg, #1b2838, #2d1b4e)",
+    emoji: "😱",
+  },
+  {
+    top: "\"IT'S NOT A BUG\"",
+    bottom: "\"IT'S AN UNDOCUMENTED FEATURE\"",
+    bg: "linear-gradient(135deg, #0f2027, #1a1a2e)",
+    emoji: "✨",
+  },
+  {
+    top: "THERE ARE ONLY 2 HARD PROBLEMS IN CS:",
+    bottom: "CACHE INVALIDATION, NAMING THINGS, AND OFF-BY-ONE ERRORS",
+    bg: "linear-gradient(135deg, #1a1a2e, #203a43)",
+    emoji: "🧠",
+  },
+  {
+    top: "DEADLINE IS TOMORROW",
+    bottom: "TIME TO START THE PROJECT",
+    bg: "linear-gradient(135deg, #2d1b4e, #16213e)",
+    emoji: "⏰",
+  },
+  {
+    top: "ME: I'LL JUST CHANGE ONE LINE OF CSS",
+    bottom: "THE ENTIRE UI:",
+    bg: "linear-gradient(135deg, #16213e, #0f2027)",
+    emoji: "💥",
+  },
+  {
+    top: "WHO NEEDS SLEEP",
+    bottom: "WHEN YOU HAVE A BUG THAT ONLY HAPPENS IN PRODUCTION",
+    bg: "linear-gradient(135deg, #1b2838, #1a1a2e)",
+    emoji: "🌙",
+  },
+  {
+    top: "\"LET ME JUST QUICKLY UPDATE THIS DEPENDENCY\"",
+    bottom: "4,782 BREAKING CHANGES LATER",
+    bg: "linear-gradient(135deg, #0f2027, #2d1b4e)",
+    emoji: "📦",
+  },
+  {
+    top: "TABS VS SPACES",
+    bottom: "THE ONLY WAR THAT TRULY MATTERS",
+    bg: "linear-gradient(135deg, #1a1a2e, #1b2838)",
+    emoji: "⚔️",
+  },
+  {
+    top: "console.log('HERE')",
+    bottom: "console.log('HERE 2') console.log('WHY') console.log('PLEASE')",
+    bg: "linear-gradient(135deg, #203a43, #2d1b4e)",
+    emoji: "🪵",
+  },
+  {
+    top: "DELETED node_modules",
+    bottom: "FREED UP 47 GB OF DISK SPACE",
+    bg: "linear-gradient(135deg, #2d1b4e, #0f2027)",
+    emoji: "🗑️",
+  },
+  {
+    top: "\"THIS IS TEMPORARY CODE\"",
+    bottom: "— DEVELOPER, 2014. THE CODE IS STILL RUNNING.",
+    bg: "linear-gradient(135deg, #16213e, #1a1a2e)",
+    emoji: "🏛️",
+  },
+  {
+    top: "HOW I WRITE CODE:",
+    bottom: "1% CODING, 99% GOOGLING WHY IT DOESN'T WORK",
+    bg: "linear-gradient(135deg, #1b2838, #203a43)",
+    emoji: "🔍",
+  },
+  {
+    top: "MERGE CONFLICT",
+    bottom: "ACCEPT BOTH CHANGES AND PRAY",
+    bg: "linear-gradient(135deg, #1a1a2e, #0f2027)",
+    emoji: "🙏",
+  },
+  {
+    top: "FRIDAY DEPLOY?",
+    bottom: "WHAT COULD POSSIBLY GO WRONG",
+    bg: "linear-gradient(135deg, #0f2027, #16213e)",
+    emoji: "🎰",
+  },
+  {
+    top: "EXPLAINING MY CODE TO A RUBBER DUCK",
+    bottom: "THE DUCK: 🦆 ME: OH WAIT I SEE THE BUG",
+    bg: "linear-gradient(135deg, #2d1b4e, #1b2838)",
+    emoji: "🦆",
+  },
+];
 ---
 
-<BaseLayout title="Backward Euler Method — Interactive Visualizer">
-  <div class="app">
+<BaseLayout title="Software Memes">
+  <div class="page">
     <header>
-      <h1>Backward Euler Method</h1>
-      <p class="subtitle">An interactive exploration of implicit numerical integration</p>
+      <h1>Software Memes</h1>
+      <p class="subtitle">Because if we don't laugh, we'll cry</p>
     </header>
 
-    <div class="layout">
-      <aside class="controls">
-        <section class="control-group">
-          <h2>Differential Equation</h2>
-          <div class="select-wrap">
-            <select id="ode-select">
-              <option value="decay">y' = −λy (Exponential Decay)</option>
-              <option value="growth">y' = λy (Exponential Growth)</option>
-              <option value="logistic">y' = y(1 − y) (Logistic)</option>
-              <option value="sine">y' = cos(t) (Sine Solution)</option>
-              <option value="stiff">y' = −15y (Stiff Equation)</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="control-group">
-          <h2>Parameters</h2>
-          <label class="slider-label">
-            <span>Step size (h)</span>
-            <span class="value" id="h-value">0.50</span>
-          </label>
-          <input type="range" id="h-slider" min="0.05" max="2.0" step="0.05" value="0.50" />
-
-          <label class="slider-label">
-            <span>Steps (n)</span>
-            <span class="value" id="n-value">10</span>
-          </label>
-          <input type="range" id="n-slider" min="1" max="40" step="1" value="10" />
-
-          <label class="slider-label">
-            <span>Initial value (y₀)</span>
-            <span class="value" id="y0-value">1.00</span>
-          </label>
-          <input type="range" id="y0-slider" min="-2.0" max="3.0" step="0.1" value="1.0" />
-
-          <label class="slider-label" id="lambda-group">
-            <span>λ</span>
-            <span class="value" id="lambda-value">2.00</span>
-          </label>
-          <input type="range" id="lambda-slider" min="0.1" max="5.0" step="0.1" value="2.0" />
-        </section>
-
-        <section class="control-group">
-          <h2>Display</h2>
-          <label class="checkbox-label">
-            <input type="checkbox" id="show-exact" checked />
-            <span>Exact solution</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="show-forward" />
-            <span>Forward Euler (compare)</span>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="show-steps" checked />
-            <span>Step markers</span>
-          </label>
-        </section>
-
-        <section class="control-group">
-          <h2>Playback</h2>
-          <div class="button-row">
-            <button id="btn-reset" class="btn">Reset</button>
-            <button id="btn-step" class="btn btn-accent">Step →</button>
-            <button id="btn-play" class="btn btn-accent">Play ▶</button>
-          </div>
-          <label class="slider-label">
-            <span>Speed</span>
-            <span class="value" id="speed-value">1.0×</span>
-          </label>
-          <input type="range" id="speed-slider" min="0.25" max="3.0" step="0.25" value="1.0" />
-        </section>
-      </aside>
-
-      <main>
-        <div class="canvas-container">
-          <canvas id="plot"></canvas>
+    <div class="grid">
+      {memes.map((meme) => (
+        <div class="meme-card" style={`background: ${meme.bg};`}>
+          <span class="meme-emoji">{meme.emoji}</span>
+          <p class="meme-top">{meme.top}</p>
+          {meme.bottom && <p class="meme-bottom">{meme.bottom}</p>}
         </div>
-
-        <div class="info-panel">
-          <div class="info-card" id="method-info">
-            <h3>How Backward Euler Works</h3>
-            <p>The <strong>backward Euler method</strong> is an <em>implicit</em> method:</p>
-            <div class="formula">y<sub>n+1</sub> = y<sub>n</sub> + h · f(t<sub>n+1</sub>, y<sub>n+1</sub>)</div>
-            <p>Unlike forward Euler where y<sub>n+1</sub> depends only on known values, here y<sub>n+1</sub> appears on <em>both sides</em>. We must solve for it at each step — typically via Newton's method or algebraic rearrangement.</p>
-            <p>The payoff: <strong>unconditional stability</strong> for many problems. Try cranking up the step size on the stiff equation to see backward Euler stay stable while forward Euler explodes.</p>
-          </div>
-          <div class="info-card" id="step-info">
-            <h3>Current Step</h3>
-            <p id="step-detail">Press <strong>Step →</strong> or <strong>Play</strong> to begin.</p>
-          </div>
-          <div class="info-card">
-            <h3>Error</h3>
-            <table id="error-table">
-              <thead>
-                <tr>
-                  <th>Method</th>
-                  <th>Max |error|</th>
-                  <th>Final |error|</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr id="error-backward">
-                  <td>Backward Euler</td>
-                  <td>—</td>
-                  <td>—</td>
-                </tr>
-                <tr id="error-forward" style="display: none;">
-                  <td>Forward Euler</td>
-                  <td>—</td>
-                  <td>—</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
+      ))}
     </div>
+
+    <footer>
+      <p>Made with mass-produced serotonin</p>
+    </footer>
   </div>
 </BaseLayout>
 
 <style>
-  .app {
-    max-width: 1400px;
+  .page {
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 40px 24px;
   }
 
   header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: 48px;
   }
 
   header h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
     letter-spacing: -0.03em;
   }
 
   .subtitle {
     color: var(--text-dim);
-    margin-top: 4px;
+    margin-top: 8px;
+    font-size: 1.1rem;
   }
 
-  .layout {
+  .grid {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 24px;
-    align-items: start;
-  }
-
-  aside.controls {
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
-    position: sticky;
-    top: 24px;
   }
 
-  .control-group {
-    background: var(--bg-card);
+  .meme-card {
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px;
-  }
-
-  .control-group h2 {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    margin-bottom: 12px;
-  }
-
-  .select-wrap select {
-    width: 100%;
-    background: var(--bg-input);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-family: var(--font);
-    font-size: 0.85rem;
-    cursor: pointer;
-  }
-
-  .slider-label {
+    padding: 32px 28px;
     display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-    margin-top: 10px;
-  }
-
-  .slider-label:first-of-type {
-    margin-top: 0;
-  }
-
-  .slider-label .value {
-    font-family: var(--mono);
-    color: var(--accent);
-    font-size: 0.8rem;
-  }
-
-  input[type="range"] {
-    width: 100%;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
-
-  .checkbox-label {
-    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    margin-bottom: 6px;
-    cursor: pointer;
-  }
-
-  .checkbox-label input {
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
-
-  .button-row {
-    display: flex;
-    gap: 6px;
-  }
-
-  .btn {
-    flex: 1;
-    padding: 8px 0;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg-input);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-
-  .btn:hover {
-    background: var(--border);
-  }
-
-  .btn-accent {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .btn-accent:hover {
-    background: rgba(88, 166, 255, 0.25);
-  }
-
-  main {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .canvas-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    position: relative;
-  }
-
-  canvas {
-    width: 100%;
-    height: 480px;
-    display: block;
-    border-radius: 4px;
-  }
-
-  .info-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-  }
-
-  .info-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-  }
-
-  .info-card h3 {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .info-card p {
-    font-size: 0.88rem;
-    line-height: 1.6;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-
-  .formula {
-    font-family: var(--mono);
-    font-size: 0.9rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 14px;
-    margin: 10px 0;
-    color: var(--accent);
+    justify-content: center;
     text-align: center;
+    min-height: 240px;
+    gap: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
   }
 
-  table {
-    width: 100%;
-    font-size: 0.82rem;
-    border-collapse: collapse;
+  .meme-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
-  th, td {
-    text-align: left;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border);
+  .meme-emoji {
+    font-size: 3rem;
+    line-height: 1;
   }
 
-  th {
+  .meme-top {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+  }
+
+  .meme-bottom {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
     color: var(--text-dim);
-    font-weight: 500;
+    font-size: 0.85rem;
   }
 
-  td {
-    font-family: var(--mono);
-    font-size: 0.8rem;
-  }
-
-  @media (max-width: 900px) {
-    .layout {
-      grid-template-columns: 1fr;
-    }
-
-    aside.controls {
-      position: static;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .info-panel {
-      grid-template-columns: 1fr;
-    }
-
-    canvas {
-      height: 360px;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .app {
-      padding: 16px;
-    }
-
-    aside.controls {
-      grid-template-columns: 1fr;
+  @media (max-width: 700px) {
+    .page {
+      padding: 24px 16px;
     }
 
     header h1 {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .meme-card {
+      min-height: 200px;
+      padding: 24px 20px;
     }
   }
 </style>
-
-<script>
-  // --- ODE definitions ---
-  interface ODE {
-    f: (t: number, y: number, lam: number) => number;
-    exact: (t: number, y0: number, lam: number) => number;
-    solveBackward: (yn: number, tn1: number, h: number, lam: number) => number;
-    solveForward: (yn: number, tn: number, h: number, lam: number) => number;
-    usesLambda: boolean;
-    label: string;
-  }
-
-  const odes: Record<string, ODE> = {
-    decay: {
-      f: (_t, y, lam) => -lam * y,
-      exact: (t, y0, lam) => y0 * Math.exp(-lam * t),
-      solveBackward: (yn, _tn1, h, lam) => yn / (1 + h * lam),
-      solveForward: (yn, _tn, h, lam) => yn * (1 - h * lam),
-      usesLambda: true,
-      label: "y' = −λy",
-    },
-    growth: {
-      f: (_t, y, lam) => lam * y,
-      exact: (t, y0, lam) => y0 * Math.exp(lam * t),
-      solveBackward: (yn, _tn1, h, lam) => yn / (1 - h * lam),
-      solveForward: (yn, _tn, h, lam) => yn * (1 + h * lam),
-      usesLambda: true,
-      label: "y' = λy",
-    },
-    logistic: {
-      f: (_t, y, _lam) => y * (1 - y),
-      exact: (t, y0, _lam) => {
-        if (y0 === 0) return 0;
-        if (y0 === 1) return 1;
-        const c = (1 - y0) / y0;
-        return 1 / (1 + c * Math.exp(-t));
-      },
-      solveBackward: (yn, _tn1, h, _lam) => {
-        // y_{n+1} = y_n + h * y_{n+1} * (1 - y_{n+1})
-        // h*y^2 - (1+h)*y + y_n = 0
-        const a = h;
-        const b = -(1 + h);
-        const c = yn;
-        const disc = b * b - 4 * a * c;
-        if (disc < 0) return yn;
-        return (-b - Math.sqrt(disc)) / (2 * a);
-      },
-      solveForward: (yn, _tn, h, _lam) => yn + h * yn * (1 - yn),
-      usesLambda: false,
-      label: "y' = y(1−y)",
-    },
-    sine: {
-      f: (t, _y, _lam) => Math.cos(t),
-      exact: (t, y0, _lam) => y0 + Math.sin(t),
-      solveBackward: (yn, tn1, h, _lam) => yn + h * Math.cos(tn1),
-      solveForward: (yn, tn, h, _lam) => yn + h * Math.cos(tn),
-      usesLambda: false,
-      label: "y' = cos(t)",
-    },
-    stiff: {
-      f: (_t, y, _lam) => -15 * y,
-      exact: (t, y0, _lam) => y0 * Math.exp(-15 * t),
-      solveBackward: (yn, _tn1, h, _lam) => yn / (1 + 15 * h),
-      solveForward: (yn, _tn, h, _lam) => yn * (1 - 15 * h),
-      usesLambda: false,
-      label: "y' = −15y",
-    },
-  };
-
-  // --- DOM elements ---
-  const canvas = document.getElementById("plot") as HTMLCanvasElement;
-  const ctx = canvas.getContext("2d")!;
-
-  const odeSelect = document.getElementById("ode-select") as HTMLSelectElement;
-  const hSlider = document.getElementById("h-slider") as HTMLInputElement;
-  const nSlider = document.getElementById("n-slider") as HTMLInputElement;
-  const y0Slider = document.getElementById("y0-slider") as HTMLInputElement;
-  const lambdaSlider = document.getElementById("lambda-slider") as HTMLInputElement;
-  const speedSlider = document.getElementById("speed-slider") as HTMLInputElement;
-  const hValue = document.getElementById("h-value")!;
-  const nValue = document.getElementById("n-value")!;
-  const y0Value = document.getElementById("y0-value")!;
-  const lambdaValue = document.getElementById("lambda-value")!;
-  const speedValue = document.getElementById("speed-value")!;
-  const lambdaGroup = document.getElementById("lambda-group")!;
-
-  const showExact = document.getElementById("show-exact") as HTMLInputElement;
-  const showForward = document.getElementById("show-forward") as HTMLInputElement;
-  const showSteps = document.getElementById("show-steps") as HTMLInputElement;
-
-  const btnReset = document.getElementById("btn-reset")!;
-  const btnStep = document.getElementById("btn-step")!;
-  const btnPlay = document.getElementById("btn-play")!;
-  const stepDetail = document.getElementById("step-detail")!;
-  const errorBackward = document.getElementById("error-backward")!;
-  const errorForward = document.getElementById("error-forward")!;
-
-  // --- State ---
-  let currentStep = 0;
-  let playing = false;
-  let playTimer: number | null = null;
-
-  function getParams() {
-    return {
-      odeKey: odeSelect.value,
-      h: parseFloat(hSlider.value),
-      n: parseInt(nSlider.value),
-      y0: parseFloat(y0Slider.value),
-      lambda: parseFloat(lambdaSlider.value),
-      speed: parseFloat(speedSlider.value),
-    };
-  }
-
-  function computeSolution() {
-    const { odeKey, h, n, y0, lambda } = getParams();
-    const ode = odes[odeKey];
-    const stepsToCompute = Math.min(currentStep, n);
-
-    const backward: { t: number; y: number }[] = [{ t: 0, y: y0 }];
-    const forward: { t: number; y: number }[] = [{ t: 0, y: y0 }];
-
-    for (let i = 0; i < stepsToCompute; i++) {
-      const prevB = backward[i];
-      const tn1 = (i + 1) * h;
-      backward.push({ t: tn1, y: ode.solveBackward(prevB.y, tn1, h, lambda) });
-
-      const prevF = forward[i];
-      forward.push({ t: prevF.t + h, y: ode.solveForward(prevF.y, prevF.t, h, lambda) });
-    }
-
-    // Exact solution sampled finely
-    const tMax = n * h;
-    const exact: { t: number; y: number }[] = [];
-    const samples = 200;
-    for (let i = 0; i <= samples; i++) {
-      const t = (i / samples) * tMax;
-      exact.push({ t, y: ode.exact(t, y0, lambda) });
-    }
-
-    return { backward, forward, exact, tMax };
-  }
-
-  function draw() {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const w = rect.width;
-    const h = rect.height;
-    const pad = { top: 20, right: 30, bottom: 40, left: 55 };
-
-    ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = "#0d1117";
-    ctx.fillRect(0, 0, w, h);
-
-    const { backward, forward, exact, tMax } = computeSolution();
-
-    // Compute y range
-    const allY: number[] = [];
-    exact.forEach((p) => allY.push(p.y));
-    backward.forEach((p) => allY.push(p.y));
-    if (showForward.checked) forward.forEach((p) => allY.push(p.y));
-
-    let yMin = Math.min(...allY);
-    let yMax = Math.max(...allY);
-
-    // Clamp to avoid extreme values blowing up the plot
-    yMin = Math.max(yMin, -20);
-    yMax = Math.min(yMax, 20);
-
-    const yPad = (yMax - yMin) * 0.12 || 0.5;
-    yMin -= yPad;
-    yMax += yPad;
-
-    const plotW = w - pad.left - pad.right;
-    const plotH = h - pad.top - pad.bottom;
-
-    function toX(t: number) {
-      return pad.left + (t / tMax) * plotW;
-    }
-    function toY(y: number) {
-      return pad.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH;
-    }
-
-    // Grid lines
-    ctx.strokeStyle = "#21262d";
-    ctx.lineWidth = 1;
-
-    const tStep = niceStep(tMax, 8);
-    for (let t = 0; t <= tMax + 1e-9; t += tStep) {
-      const x = toX(t);
-      ctx.beginPath();
-      ctx.moveTo(x, pad.top);
-      ctx.lineTo(x, h - pad.bottom);
-      ctx.stroke();
-    }
-
-    const yStep = niceStep(yMax - yMin, 6);
-    const yStart = Math.ceil(yMin / yStep) * yStep;
-    for (let y = yStart; y <= yMax + 1e-9; y += yStep) {
-      const py = toY(y);
-      ctx.beginPath();
-      ctx.moveTo(pad.left, py);
-      ctx.lineTo(w - pad.right, py);
-      ctx.stroke();
-    }
-
-    // Axes
-    ctx.strokeStyle = "#30363d";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(pad.left, h - pad.bottom);
-    ctx.lineTo(w - pad.right, h - pad.bottom);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(pad.left, pad.top);
-    ctx.lineTo(pad.left, h - pad.bottom);
-    ctx.stroke();
-
-    // Axis labels
-    ctx.fillStyle = "#7d8590";
-    ctx.font = "11px 'JetBrains Mono', monospace";
-    ctx.textAlign = "center";
-
-    for (let t = 0; t <= tMax + 1e-9; t += tStep) {
-      ctx.fillText(t.toFixed(1), toX(t), h - pad.bottom + 18);
-    }
-
-    ctx.textAlign = "right";
-    for (let y = yStart; y <= yMax + 1e-9; y += yStep) {
-      ctx.fillText(y.toFixed(1), pad.left - 8, toY(y) + 4);
-    }
-
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#7d8590";
-    ctx.font = "12px 'Inter', sans-serif";
-    ctx.fillText("t", w / 2, h - 4);
-
-    ctx.save();
-    ctx.translate(14, h / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText("y", 0, 0);
-    ctx.restore();
-
-    // Zero line
-    if (yMin < 0 && yMax > 0) {
-      ctx.strokeStyle = "#30363d";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(pad.left, toY(0));
-      ctx.lineTo(w - pad.right, toY(0));
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Draw exact solution
-    if (showExact.checked) {
-      ctx.strokeStyle = "#3fb950";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath();
-      exact.forEach((p, i) => {
-        const py = Math.max(pad.top, Math.min(h - pad.bottom, toY(p.y)));
-        if (i === 0) ctx.moveTo(toX(p.t), py);
-        else ctx.lineTo(toX(p.t), py);
-      });
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Draw forward Euler
-    if (showForward.checked && forward.length > 1) {
-      drawPath(forward, "#d29922", 2, toX, toY, pad, h);
-      if (showSteps.checked) drawDots(forward, "#d29922", toX, toY);
-    }
-
-    // Draw backward Euler
-    if (backward.length > 1) {
-      drawPath(backward, "#58a6ff", 2.5, toX, toY, pad, h);
-    }
-    if (showSteps.checked) drawDots(backward, "#58a6ff", toX, toY);
-
-    // Legend
-    const legend: { color: string; label: string; dash?: number[] }[] = [
-      { color: "#58a6ff", label: "Backward Euler" },
-    ];
-    if (showForward.checked) legend.push({ color: "#d29922", label: "Forward Euler" });
-    if (showExact.checked) legend.push({ color: "#3fb950", label: "Exact", dash: [6, 4] });
-
-    const legendX = pad.left + 12;
-    let legendY = pad.top + 12;
-    ctx.font = "12px 'Inter', sans-serif";
-    legend.forEach((item) => {
-      ctx.strokeStyle = item.color;
-      ctx.lineWidth = 2;
-      ctx.setLineDash(item.dash || []);
-      ctx.beginPath();
-      ctx.moveTo(legendX, legendY);
-      ctx.lineTo(legendX + 24, legendY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = "#e6edf3";
-      ctx.textAlign = "left";
-      ctx.fillText(item.label, legendX + 30, legendY + 4);
-      legendY += 20;
-    });
-
-    // Update error table
-    updateErrors();
-  }
-
-  function drawPath(
-    pts: { t: number; y: number }[],
-    color: string,
-    lw: number,
-    toX: (t: number) => number,
-    toY: (y: number) => number,
-    pad: { top: number; bottom: number },
-    h: number
-  ) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lw;
-    ctx.beginPath();
-    pts.forEach((p, i) => {
-      const py = Math.max(pad.top, Math.min(h - pad.bottom, toY(p.y)));
-      if (i === 0) ctx.moveTo(toX(p.t), py);
-      else ctx.lineTo(toX(p.t), py);
-    });
-    ctx.stroke();
-  }
-
-  function drawDots(
-    pts: { t: number; y: number }[],
-    color: string,
-    toX: (t: number) => number,
-    toY: (y: number) => number
-  ) {
-    ctx.fillStyle = color;
-    pts.forEach((p) => {
-      ctx.beginPath();
-      ctx.arc(toX(p.t), toY(p.y), 4, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  }
-
-  function niceStep(range: number, maxTicks: number): number {
-    const rough = range / maxTicks;
-    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
-    const norm = rough / mag;
-    let step: number;
-    if (norm < 1.5) step = 1;
-    else if (norm < 3.5) step = 2;
-    else if (norm < 7.5) step = 5;
-    else step = 10;
-    return step * mag;
-  }
-
-  function updateErrors() {
-    const { odeKey, h, n, y0, lambda } = getParams();
-    const ode = odes[odeKey];
-    const { backward, forward } = computeSolution();
-
-    const stepsUsed = backward.length - 1;
-    if (stepsUsed === 0) {
-      errorBackward.children[1]!.textContent = "—";
-      errorBackward.children[2]!.textContent = "—";
-      errorForward.children[1]!.textContent = "—";
-      errorForward.children[2]!.textContent = "—";
-      return;
-    }
-
-    let maxErrB = 0,
-      maxErrF = 0;
-
-    backward.forEach((p) => {
-      const err = Math.abs(p.y - ode.exact(p.t, y0, lambda));
-      if (err > maxErrB) maxErrB = err;
-    });
-    forward.forEach((p) => {
-      const err = Math.abs(p.y - ode.exact(p.t, y0, lambda));
-      if (err > maxErrF) maxErrF = err;
-    });
-
-    const finalErrB = Math.abs(backward[stepsUsed].y - ode.exact(backward[stepsUsed].t, y0, lambda));
-    const finalErrF = Math.abs(forward[stepsUsed].y - ode.exact(forward[stepsUsed].t, y0, lambda));
-
-    const fmt = (v: number) => (v > 1000 ? v.toExponential(2) : v.toFixed(4));
-
-    errorBackward.children[1]!.textContent = fmt(maxErrB);
-    errorBackward.children[2]!.textContent = fmt(finalErrB);
-    errorForward.children[1]!.textContent = fmt(maxErrF);
-    errorForward.children[2]!.textContent = fmt(finalErrF);
-    (errorForward as HTMLElement).style.display = showForward.checked ? "" : "none";
-  }
-
-  function updateStepInfo() {
-    const { odeKey, h, n, y0, lambda } = getParams();
-    const ode = odes[odeKey];
-    const stepsUsed = Math.min(currentStep, n);
-
-    if (stepsUsed === 0) {
-      stepDetail.innerHTML = `Step <strong>0/${n}</strong> — t = 0, y = ${y0.toFixed(3)}. Press <strong>Step →</strong> or <strong>Play</strong> to begin.`;
-      return;
-    }
-
-    const { backward } = computeSolution();
-    const last = backward[backward.length - 1];
-    const exactVal = ode.exact(last.t, y0, lambda);
-    const err = Math.abs(last.y - exactVal);
-
-    stepDetail.innerHTML =
-      `Step <strong>${stepsUsed}/${n}</strong> — ` +
-      `t = ${last.t.toFixed(2)}, y<sub>BE</sub> = ${last.y.toFixed(4)}, ` +
-      `y<sub>exact</sub> = ${exactVal.toFixed(4)}, |err| = ${err.toFixed(4)}`;
-  }
-
-  function resetSim() {
-    currentStep = 0;
-    stopPlay();
-    updateStepInfo();
-    draw();
-  }
-
-  function stepForward() {
-    const { n } = getParams();
-    if (currentStep < n) {
-      currentStep++;
-      updateStepInfo();
-      draw();
-    }
-    if (currentStep >= n) stopPlay();
-  }
-
-  function stopPlay() {
-    playing = false;
-    btnPlay.textContent = "Play ▶";
-    if (playTimer !== null) {
-      clearInterval(playTimer);
-      playTimer = null;
-    }
-  }
-
-  function togglePlay() {
-    if (playing) {
-      stopPlay();
-      return;
-    }
-    const { n, speed } = getParams();
-    if (currentStep >= n) currentStep = 0;
-    playing = true;
-    btnPlay.textContent = "Pause ⏸";
-    playTimer = window.setInterval(() => stepForward(), 600 / speed);
-  }
-
-  // --- Event bindings ---
-  function bindSlider(slider: HTMLInputElement, display: HTMLElement, fmt: (v: string) => string) {
-    slider.addEventListener("input", () => {
-      display.textContent = fmt(slider.value);
-      resetSim();
-    });
-  }
-
-  bindSlider(hSlider, hValue, (v) => parseFloat(v).toFixed(2));
-  bindSlider(nSlider, nValue, (v) => v);
-  bindSlider(y0Slider, y0Value, (v) => parseFloat(v).toFixed(2));
-  bindSlider(lambdaSlider, lambdaValue, (v) => parseFloat(v).toFixed(2));
-  speedSlider.addEventListener("input", () => {
-    speedValue.textContent = parseFloat(speedSlider.value).toFixed(1) + "×";
-    if (playing) {
-      stopPlay();
-      togglePlay();
-    }
-  });
-
-  odeSelect.addEventListener("change", () => {
-    const ode = odes[odeSelect.value];
-    lambdaGroup.style.display = ode.usesLambda ? "" : "none";
-    lambdaSlider.style.display = ode.usesLambda ? "" : "none";
-    resetSim();
-  });
-
-  showExact.addEventListener("change", draw);
-  showForward.addEventListener("change", draw);
-  showSteps.addEventListener("change", draw);
-
-  btnReset.addEventListener("click", resetSim);
-  btnStep.addEventListener("click", stepForward);
-  btnPlay.addEventListener("click", togglePlay);
-
-  // Initial draw
-  window.addEventListener("resize", draw);
-  lambdaGroup.style.display = odes[odeSelect.value].usesLambda ? "" : "none";
-  lambdaSlider.style.display = odes[odeSelect.value].usesLambda ? "" : "none";
-  updateStepInfo();
-  draw();
-</script>
-</BaseLayout>
