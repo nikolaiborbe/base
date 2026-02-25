@@ -1,287 +1,698 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-interface Meme {
-  top: string;
-  bottom: string;
-  bg: string;
-  emoji: string;
-}
-
-const memes: Meme[] = [
-  {
-    top: "WORKS ON MY MACHINE",
-    bottom: "SHIPS IT TO PRODUCTION",
-    bg: "linear-gradient(135deg, #1a1a2e, #16213e)",
-    emoji: "🔥",
-  },
-  {
-    top: "99 LITTLE BUGS IN THE CODE",
-    bottom: "TAKE ONE DOWN, PATCH IT AROUND... 127 LITTLE BUGS IN THE CODE",
-    bg: "linear-gradient(135deg, #2d1b4e, #1a1a2e)",
-    emoji: "🐛",
-  },
-  {
-    top: "SENIOR DEV: DON'T WORRY, IT'S A SIMPLE FIX",
-    bottom: "3 SPRINTS LATER...",
-    bg: "linear-gradient(135deg, #1b2838, #0f2027)",
-    emoji: "💀",
-  },
-  {
-    top: "git commit -m \"fixed it\"",
-    bottom: "NARRATOR: HE DID NOT FIX IT",
-    bg: "linear-gradient(135deg, #1a1a2e, #2d1b4e)",
-    emoji: "📖",
-  },
-  {
-    top: "STACKOVERFLOW IS DOWN",
-    bottom: "GUESS I'LL DIE",
-    bg: "linear-gradient(135deg, #0f2027, #203a43)",
-    emoji: "☠️",
-  },
-  {
-    top: "\"WE DON'T NEED TESTS\"",
-    bottom: "— FAMOUS LAST WORDS BEFORE EVERY PRODUCTION INCIDENT",
-    bg: "linear-gradient(135deg, #2d1b4e, #0f2027)",
-    emoji: "🧪",
-  },
-  {
-    top: "MY CODE DOESN'T WORK",
-    bottom: "I HAVE NO IDEA WHY. MY CODE WORKS. I HAVE NO IDEA WHY.",
-    bg: "linear-gradient(135deg, #1a1a2e, #16213e)",
-    emoji: "🤷",
-  },
-  {
-    top: "\"I'LL REFACTOR THIS LATER\"",
-    bottom: "THE CODE 5 YEARS LATER: STILL THERE",
-    bg: "linear-gradient(135deg, #16213e, #1b2838)",
-    emoji: "🏚️",
-  },
-  {
-    top: "DOCUMENTATION?",
-    bottom: "THE CODE IS SELF-DOCUMENTING",
-    bg: "linear-gradient(135deg, #203a43, #1a1a2e)",
-    emoji: "📝",
-  },
-  {
-    top: "WHEN THE INTERN PUSHES DIRECTLY TO MAIN",
-    bottom: "",
-    bg: "linear-gradient(135deg, #1b2838, #2d1b4e)",
-    emoji: "😱",
-  },
-  {
-    top: "\"IT'S NOT A BUG\"",
-    bottom: "\"IT'S AN UNDOCUMENTED FEATURE\"",
-    bg: "linear-gradient(135deg, #0f2027, #1a1a2e)",
-    emoji: "✨",
-  },
-  {
-    top: "THERE ARE ONLY 2 HARD PROBLEMS IN CS:",
-    bottom: "CACHE INVALIDATION, NAMING THINGS, AND OFF-BY-ONE ERRORS",
-    bg: "linear-gradient(135deg, #1a1a2e, #203a43)",
-    emoji: "🧠",
-  },
-  {
-    top: "DEADLINE IS TOMORROW",
-    bottom: "TIME TO START THE PROJECT",
-    bg: "linear-gradient(135deg, #2d1b4e, #16213e)",
-    emoji: "⏰",
-  },
-  {
-    top: "ME: I'LL JUST CHANGE ONE LINE OF CSS",
-    bottom: "THE ENTIRE UI:",
-    bg: "linear-gradient(135deg, #16213e, #0f2027)",
-    emoji: "💥",
-  },
-  {
-    top: "WHO NEEDS SLEEP",
-    bottom: "WHEN YOU HAVE A BUG THAT ONLY HAPPENS IN PRODUCTION",
-    bg: "linear-gradient(135deg, #1b2838, #1a1a2e)",
-    emoji: "🌙",
-  },
-  {
-    top: "\"LET ME JUST QUICKLY UPDATE THIS DEPENDENCY\"",
-    bottom: "4,782 BREAKING CHANGES LATER",
-    bg: "linear-gradient(135deg, #0f2027, #2d1b4e)",
-    emoji: "📦",
-  },
-  {
-    top: "TABS VS SPACES",
-    bottom: "THE ONLY WAR THAT TRULY MATTERS",
-    bg: "linear-gradient(135deg, #1a1a2e, #1b2838)",
-    emoji: "⚔️",
-  },
-  {
-    top: "console.log('HERE')",
-    bottom: "console.log('HERE 2') console.log('WHY') console.log('PLEASE')",
-    bg: "linear-gradient(135deg, #203a43, #2d1b4e)",
-    emoji: "🪵",
-  },
-  {
-    top: "DELETED node_modules",
-    bottom: "FREED UP 47 GB OF DISK SPACE",
-    bg: "linear-gradient(135deg, #2d1b4e, #0f2027)",
-    emoji: "🗑️",
-  },
-  {
-    top: "\"THIS IS TEMPORARY CODE\"",
-    bottom: "— DEVELOPER, 2014. THE CODE IS STILL RUNNING.",
-    bg: "linear-gradient(135deg, #16213e, #1a1a2e)",
-    emoji: "🏛️",
-  },
-  {
-    top: "HOW I WRITE CODE:",
-    bottom: "1% CODING, 99% GOOGLING WHY IT DOESN'T WORK",
-    bg: "linear-gradient(135deg, #1b2838, #203a43)",
-    emoji: "🔍",
-  },
-  {
-    top: "MERGE CONFLICT",
-    bottom: "ACCEPT BOTH CHANGES AND PRAY",
-    bg: "linear-gradient(135deg, #1a1a2e, #0f2027)",
-    emoji: "🙏",
-  },
-  {
-    top: "FRIDAY DEPLOY?",
-    bottom: "WHAT COULD POSSIBLY GO WRONG",
-    bg: "linear-gradient(135deg, #0f2027, #16213e)",
-    emoji: "🎰",
-  },
-  {
-    top: "EXPLAINING MY CODE TO A RUBBER DUCK",
-    bottom: "THE DUCK: 🦆 ME: OH WAIT I SEE THE BUG",
-    bg: "linear-gradient(135deg, #2d1b4e, #1b2838)",
-    emoji: "🦆",
-  },
-];
 ---
 
-<BaseLayout title="Software Memes">
-  <div class="page">
+<BaseLayout title="Data Collector">
+  <div class="app">
     <header>
-      <h1>Software Memes</h1>
-      <p class="subtitle">Because if we don't laugh, we'll cry</p>
+      <h1>Data Collector</h1>
+      <p class="subtitle">Define your fields, collect data, export to CSV.</p>
     </header>
 
-    <div class="grid">
-      {memes.map((meme) => (
-        <div class="meme-card" style={`background: ${meme.bg};`}>
-          <span class="meme-emoji">{meme.emoji}</span>
-          <p class="meme-top">{meme.top}</p>
-          {meme.bottom && <p class="meme-bottom">{meme.bottom}</p>}
-        </div>
-      ))}
-    </div>
+    <!-- Step 1: Define columns -->
+    <section class="card" id="schema-section">
+      <h2>
+        <span class="step">1</span>
+        Define Fields
+      </h2>
+      <div id="field-list" class="field-list"></div>
+      <form id="add-field-form" class="inline-form">
+        <input
+          type="text"
+          id="field-name-input"
+          placeholder="Field name"
+          required
+          autocomplete="off"
+        />
+        <select id="field-type-input">
+          <option value="text">Text</option>
+          <option value="number">Number</option>
+          <option value="date">Date</option>
+          <option value="select">Select (options)</option>
+          <option value="checkbox">Checkbox</option>
+        </select>
+        <button type="submit" class="btn btn-accent">Add Field</button>
+      </form>
+      <div id="options-row" class="options-row hidden">
+        <label for="field-options-input">Comma-separated options:</label>
+        <input
+          type="text"
+          id="field-options-input"
+          placeholder="e.g. Red, Green, Blue"
+          autocomplete="off"
+        />
+      </div>
+    </section>
 
-    <footer>
-      <p>Made with mass-produced serotonin</p>
-    </footer>
+    <!-- Step 2: Collect data -->
+    <section class="card" id="collect-section">
+      <h2>
+        <span class="step">2</span>
+        Collect Data
+      </h2>
+      <div id="empty-state" class="empty-state">
+        Add at least one field above to start collecting data.
+      </div>
+      <form id="entry-form" class="entry-form hidden"></form>
+      <div id="table-wrapper" class="table-wrapper hidden">
+        <table id="data-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <p id="row-count" class="row-count hidden">0 rows</p>
+    </section>
+
+    <!-- Step 3: Export -->
+    <section class="card" id="export-section">
+      <h2>
+        <span class="step">3</span>
+        Export
+      </h2>
+      <div class="export-actions">
+        <button id="download-btn" class="btn btn-green" disabled>
+          Download CSV
+        </button>
+        <button id="clear-btn" class="btn btn-red" disabled>
+          Clear All Data
+        </button>
+      </div>
+    </section>
   </div>
 </BaseLayout>
 
 <style>
-  .page {
-    max-width: 1200px;
+  .app {
+    max-width: 960px;
     margin: 0 auto;
-    padding: 40px 24px;
+    padding: 2rem 1.5rem 4rem;
   }
 
   header {
-    text-align: center;
-    margin-bottom: 48px;
+    margin-bottom: 2rem;
   }
 
-  header h1 {
-    font-size: 2.5rem;
+  h1 {
+    font-size: 2rem;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
   }
 
   .subtitle {
     color: var(--text-dim);
-    margin-top: 8px;
-    font-size: 1.1rem;
+    margin-top: 0.25rem;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-  }
-
-  .meme-card {
+  .card {
+    background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 32px 28px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .step {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    min-height: 240px;
-    gap: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .meme-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-
-  .meme-emoji {
-    font-size: 3rem;
-    line-height: 1;
-  }
-
-  .meme-top {
-    font-family: 'Impact', 'Arial Black', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #fff;
-    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
-    letter-spacing: 0.02em;
-    line-height: 1.3;
-  }
-
-  .meme-bottom {
-    font-family: 'Impact', 'Arial Black', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--accent-soft);
     color: var(--accent);
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
-    letter-spacing: 0.02em;
-    line-height: 1.4;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
   }
 
-  footer {
-    text-align: center;
-    margin-top: 64px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+  /* Fields */
+  .field-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Forms */
+  .inline-form {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .options-row {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .options-row label {
+    font-size: 0.85rem;
     color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .options-row input {
+    flex: 1;
+  }
+
+  input,
+  select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: var(--accent);
+  }
+
+  input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn {
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    opacity: 0.85;
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .btn-green {
+    background: var(--green);
+    color: #000;
+  }
+
+  .btn-red {
+    background: var(--red);
+    color: #000;
+  }
+
+  /* Entry form */
+  .entry-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Data table */
+  .table-wrapper {
+    overflow-x: auto;
+    margin-bottom: 0.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 0.85rem;
   }
 
-  @media (max-width: 700px) {
-    .page {
-      padding: 24px 16px;
+  th,
+  td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+  }
+
+  tbody tr:hover {
+    background: var(--bg-input);
+  }
+
+  .row-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .empty-state {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .export-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  @media (max-width: 600px) {
+    .app {
+      padding: 1.25rem 1rem 3rem;
     }
 
-    header h1 {
-      font-size: 1.8rem;
+    .inline-form {
+      flex-direction: column;
     }
 
-    .grid {
+    .entry-form {
       grid-template-columns: 1fr;
     }
+  }
+</style>
 
-    .meme-card {
-      min-height: 200px;
-      padding: 24px 20px;
+<script>
+  interface Field {
+    name: string;
+    type: "text" | "number" | "date" | "select" | "checkbox";
+    options?: string[];
+  }
+
+  const fields: Field[] = [];
+  const rows: Record<string, string>[] = [];
+
+  // DOM references
+  const fieldList = document.getElementById("field-list")!;
+  const addFieldForm = document.getElementById(
+    "add-field-form",
+  ) as HTMLFormElement;
+  const fieldNameInput = document.getElementById(
+    "field-name-input",
+  ) as HTMLInputElement;
+  const fieldTypeInput = document.getElementById(
+    "field-type-input",
+  ) as HTMLSelectElement;
+  const fieldOptionsInput = document.getElementById(
+    "field-options-input",
+  ) as HTMLInputElement;
+  const optionsRow = document.getElementById("options-row")!;
+  const emptyState = document.getElementById("empty-state")!;
+  const entryForm = document.getElementById("entry-form") as HTMLFormElement;
+  const tableWrapper = document.getElementById("table-wrapper")!;
+  const tableHead = document.getElementById("table-head")!;
+  const tableBody = document.getElementById("table-body")!;
+  const rowCount = document.getElementById("row-count")!;
+  const downloadBtn = document.getElementById(
+    "download-btn",
+  ) as HTMLButtonElement;
+  const clearBtn = document.getElementById("clear-btn") as HTMLButtonElement;
+
+  // Show/hide options input when type changes
+  fieldTypeInput.addEventListener("change", () => {
+    optionsRow.classList.toggle("hidden", fieldTypeInput.value !== "select");
+  });
+
+  // Add a field
+  addFieldForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = fieldNameInput.value.trim();
+    if (!name) return;
+    if (fields.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
+      alert("A field with that name already exists.");
+      return;
     }
+
+    const type = fieldTypeInput.value as Field["type"];
+    const field: Field = { name, type };
+
+    if (type === "select") {
+      const opts = fieldOptionsInput.value
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean);
+      if (opts.length === 0) {
+        alert("Please enter at least one option for the select field.");
+        return;
+      }
+      field.options = opts;
+    }
+
+    fields.push(field);
+    fieldNameInput.value = "";
+    fieldOptionsInput.value = "";
+    optionsRow.classList.add("hidden");
+    fieldTypeInput.value = "text";
+    fieldNameInput.focus();
+    renderAll();
+  });
+
+  function renderAll() {
+    renderFieldTags();
+    renderEntryForm();
+    renderTable();
+    updateButtons();
+  }
+
+  function renderFieldTags() {
+    fieldList.innerHTML = "";
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      const tag = document.createElement("span");
+      tag.className = "field-tag";
+      const typeLabel =
+        f.type === "select" ? `select(${f.options!.join("|")})` : f.type;
+      tag.innerHTML = `${esc(f.name)} <span class="field-type">${esc(typeLabel)}</span>`;
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "\u00d7";
+      removeBtn.title = "Remove field";
+      removeBtn.addEventListener("click", () => removeField(i));
+      tag.appendChild(removeBtn);
+      fieldList.appendChild(tag);
+    }
+  }
+
+  function removeField(index: number) {
+    const name = fields[index].name;
+    fields.splice(index, 1);
+    for (const row of rows) {
+      delete row[name];
+    }
+    renderAll();
+  }
+
+  function renderEntryForm() {
+    if (fields.length === 0) {
+      emptyState.classList.remove("hidden");
+      entryForm.classList.add("hidden");
+      return;
+    }
+    emptyState.classList.add("hidden");
+    entryForm.classList.remove("hidden");
+    entryForm.innerHTML = "";
+
+    for (const f of fields) {
+      const group = document.createElement("div");
+      group.className = "form-group";
+
+      const label = document.createElement("label");
+      label.textContent = f.name;
+      group.appendChild(label);
+
+      if (f.type === "select") {
+        const sel = document.createElement("select");
+        sel.name = f.name;
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select\u2026";
+        sel.appendChild(placeholder);
+        for (const opt of f.options!) {
+          const o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt;
+          sel.appendChild(o);
+        }
+        group.appendChild(sel);
+      } else if (f.type === "checkbox") {
+        const wrapper = document.createElement("div");
+        wrapper.className = "checkbox-wrapper";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.name = f.name;
+        wrapper.appendChild(cb);
+        const cbLabel = document.createElement("span");
+        cbLabel.textContent = "Yes";
+        cbLabel.style.fontSize = "0.85rem";
+        wrapper.appendChild(cbLabel);
+        group.appendChild(wrapper);
+      } else {
+        const inp = document.createElement("input");
+        inp.type =
+          f.type === "number" ? "number" : f.type === "date" ? "date" : "text";
+        inp.name = f.name;
+        inp.placeholder = f.name;
+        if (f.type === "number") inp.step = "any";
+        group.appendChild(inp);
+      }
+
+      entryForm.appendChild(group);
+    }
+
+    // Submit button
+    const submitGroup = document.createElement("div");
+    submitGroup.className = "form-group submit-group";
+    const spacer = document.createElement("label");
+    spacer.innerHTML = "&nbsp;";
+    submitGroup.appendChild(spacer);
+    const submitBtn = document.createElement("button");
+    submitBtn.type = "submit";
+    submitBtn.className = "btn btn-accent";
+    submitBtn.textContent = "Add Row";
+    submitGroup.appendChild(submitBtn);
+    entryForm.appendChild(submitGroup);
+  }
+
+  // Handle entry form submission
+  entryForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const row: Record<string, string> = {};
+    for (const f of fields) {
+      if (f.type === "checkbox") {
+        const cb = entryForm.querySelector(
+          `input[name="${CSS.escape(f.name)}"]`,
+        ) as HTMLInputElement;
+        row[f.name] = cb?.checked ? "Yes" : "No";
+      } else {
+        const el = entryForm.querySelector(
+          `[name="${CSS.escape(f.name)}"]`,
+        ) as HTMLInputElement | HTMLSelectElement;
+        row[f.name] = el?.value ?? "";
+      }
+    }
+    rows.push(row);
+
+    // Reset form inputs
+    for (const f of fields) {
+      if (f.type === "checkbox") {
+        const cb = entryForm.querySelector(
+          `input[name="${CSS.escape(f.name)}"]`,
+        ) as HTMLInputElement;
+        if (cb) cb.checked = false;
+      } else {
+        const el = entryForm.querySelector(
+          `[name="${CSS.escape(f.name)}"]`,
+        ) as HTMLInputElement | HTMLSelectElement;
+        if (el) el.value = "";
+      }
+    }
+
+    const firstInput = entryForm.querySelector("input, select") as HTMLElement;
+    firstInput?.focus();
+
+    renderTable();
+    updateButtons();
+  });
+
+  function renderTable() {
+    if (rows.length === 0 || fields.length === 0) {
+      tableWrapper.classList.add("hidden");
+      rowCount.classList.add("hidden");
+      return;
+    }
+    tableWrapper.classList.remove("hidden");
+    rowCount.classList.remove("hidden");
+
+    // Head
+    tableHead.innerHTML = "";
+    const headRow = document.createElement("tr");
+    const numTh = document.createElement("th");
+    numTh.textContent = "#";
+    headRow.appendChild(numTh);
+    for (const f of fields) {
+      const th = document.createElement("th");
+      th.textContent = f.name;
+      headRow.appendChild(th);
+    }
+    const actionsTh = document.createElement("th");
+    headRow.appendChild(actionsTh);
+    tableHead.appendChild(headRow);
+
+    // Body
+    tableBody.innerHTML = "";
+    for (let i = 0; i < rows.length; i++) {
+      const tr = document.createElement("tr");
+      const numTd = document.createElement("td");
+      numTd.textContent = String(i + 1);
+      numTd.style.color = "var(--text-dim)";
+      tr.appendChild(numTd);
+      for (const f of fields) {
+        const td = document.createElement("td");
+        td.textContent = rows[i][f.name] ?? "";
+        tr.appendChild(td);
+      }
+      const actionsTd = document.createElement("td");
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "\u00d7";
+      delBtn.title = "Delete row";
+      delBtn.style.cssText =
+        "background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;padding:0.15rem 0.3rem;";
+      delBtn.addEventListener("mouseenter", () => {
+        delBtn.style.color = "var(--red)";
+      });
+      delBtn.addEventListener("mouseleave", () => {
+        delBtn.style.color = "var(--text-dim)";
+      });
+      delBtn.addEventListener("click", () => {
+        rows.splice(i, 1);
+        renderTable();
+        updateButtons();
+      });
+      actionsTd.appendChild(delBtn);
+      tr.appendChild(actionsTd);
+      tableBody.appendChild(tr);
+    }
+
+    rowCount.textContent = `${rows.length} row${rows.length !== 1 ? "s" : ""}`;
+  }
+
+  function updateButtons() {
+    const hasData = rows.length > 0 && fields.length > 0;
+    downloadBtn.disabled = !hasData;
+    clearBtn.disabled = !hasData;
+  }
+
+  // CSV download
+  downloadBtn.addEventListener("click", () => {
+    if (rows.length === 0 || fields.length === 0) return;
+
+    const header = fields.map((f) => csvCell(f.name)).join(",");
+    const body = rows
+      .map((row) => fields.map((f) => csvCell(row[f.name] ?? "")).join(","))
+      .join("\n");
+    const csv = header + "\n" + body + "\n";
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `data-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  function csvCell(value: string): string {
+    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+      return '"' + value.replace(/"/g, '""') + '"';
+    }
+    return value;
+  }
+
+  // Clear all data
+  clearBtn.addEventListener("click", () => {
+    if (!confirm("Clear all collected data? This cannot be undone.")) return;
+    rows.length = 0;
+    renderTable();
+    updateButtons();
+  });
+
+  // Escape HTML
+  function esc(s: string): string {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+</script>
+
+<style is:global>
+  .field-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .field-tag .field-type {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+  }
+
+  .field-tag button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0 0 0 0.2rem;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .field-tag button:hover {
+    color: var(--red);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .submit-group {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    height: 2.2rem;
+    gap: 0.4rem;
+  }
+
+  .checkbox-wrapper input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--accent);
   }
 </style>
