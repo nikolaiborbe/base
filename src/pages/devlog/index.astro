@@ -1,0 +1,168 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("devlog")).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<BaseLayout
+  title="Dev Log — IPD Lab"
+  description="Experiment write-ups from the Iterated Prisoner's Dilemma strategy lab."
+>
+  <div class="page">
+    <nav class="breadcrumb">
+      <a href="/">IPD Lab</a>
+      <span>/</span>
+      <span>Dev Log</span>
+    </nav>
+
+    <header>
+      <h1>Dev Log</h1>
+      <p class="subtitle">
+        Experiment write-ups — tournaments run, strategies tested, things
+        learned.
+      </p>
+    </header>
+
+    {
+      posts.length === 0 ? (
+        <p class="empty">No posts yet. First experiment coming soon.</p>
+      ) : (
+        <ol class="post-list">
+          {posts.map((post) => {
+            const formatted = post.data.date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+            return (
+              <li>
+                <a href={`/devlog/${post.slug}/`} class="post-card">
+                  <time datetime={post.data.date.toISOString()}>
+                    {formatted}
+                  </time>
+                  <h2>{post.data.title}</h2>
+                  <p>{post.data.description}</p>
+                  {post.data.tags && post.data.tags.length > 0 && (
+                    <div class="tags">
+                      {post.data.tags.map((t: string) => (
+                        <span class="tag">{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </a>
+              </li>
+            );
+          })}
+        </ol>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 2.5rem;
+  }
+
+  .breadcrumb a {
+    color: var(--text-dim);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--text);
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+  }
+
+  .empty {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .post-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border-top: 1px solid var(--border);
+  }
+
+  .post-card {
+    display: block;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s;
+  }
+
+  .post-card:hover {
+    opacity: 0.8;
+  }
+
+  time {
+    display: block;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    margin-bottom: 0.35rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.35rem;
+  }
+
+  p {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .tags {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  .tag {
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.45rem;
+    color: var(--text-dim);
+  }
+</style>

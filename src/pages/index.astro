@@ -2,697 +2,235 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Data Collector">
-  <div class="app">
+<BaseLayout title="IPD Lab — Iterated Prisoner's Dilemma">
+  <div class="page">
     <header>
-      <h1>Data Collector</h1>
-      <p class="subtitle">Define your fields, collect data, export to CSV.</p>
+      <h1>IPD Lab</h1>
+      <p class="tagline">
+        A research playground for <strong>iterated Prisoner's Dilemma</strong> strategies.
+      </p>
     </header>
 
-    <!-- Step 1: Define columns -->
-    <section class="card" id="schema-section">
-      <h2>
-        <span class="step">1</span>
-        Define Fields
-      </h2>
-      <div id="field-list" class="field-list"></div>
-      <form id="add-field-form" class="inline-form">
-        <input
-          type="text"
-          id="field-name-input"
-          placeholder="Field name"
-          required
-          autocomplete="off"
-        />
-        <select id="field-type-input">
-          <option value="text">Text</option>
-          <option value="number">Number</option>
-          <option value="date">Date</option>
-          <option value="select">Select (options)</option>
-          <option value="checkbox">Checkbox</option>
-        </select>
-        <button type="submit" class="btn btn-accent">Add Field</button>
-      </form>
-      <div id="options-row" class="options-row hidden">
-        <label for="field-options-input">Comma-separated options:</label>
-        <input
-          type="text"
-          id="field-options-input"
-          placeholder="e.g. Red, Green, Blue"
-          autocomplete="off"
-        />
-      </div>
+    <section class="intro">
+      <p>
+        The Prisoner's Dilemma is the canonical model of conflict between
+        cooperation and self-interest. Two players independently choose to
+        <strong>cooperate</strong> or <strong>defect</strong>. If both cooperate they
+        share a decent reward. If one defects while the other cooperates, the
+        defector gets a big payoff and the cooperator gets nothing. If both
+        defect, both lose.
+      </p>
+      <p>
+        Things get interesting when the game <em>repeats</em>. In the iterated
+        version, players remember past interactions and can develop strategies &mdash;
+        retaliate, forgive, exploit patterns, or build trust. Robert Axelrod's
+        famous tournaments in the 1980s showed that simple, cooperative
+        strategies (like <strong>Tit for Tat</strong>) often beat sophisticated
+        exploiters.
+      </p>
+      <p>
+        This site is a lab for running those tournaments, testing strategies,
+        and documenting what emerges.
+      </p>
     </section>
 
-    <!-- Step 2: Collect data -->
-    <section class="card" id="collect-section">
-      <h2>
-        <span class="step">2</span>
-        Collect Data
-      </h2>
-      <div id="empty-state" class="empty-state">
-        Add at least one field above to start collecting data.
-      </div>
-      <form id="entry-form" class="entry-form hidden"></form>
-      <div id="table-wrapper" class="table-wrapper hidden">
-        <table id="data-table">
-          <thead id="table-head"></thead>
-          <tbody id="table-body"></tbody>
-        </table>
-      </div>
-      <p id="row-count" class="row-count hidden">0 rows</p>
-    </section>
+    <div class="payoff-card">
+      <h2>Standard Payoff Matrix</h2>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Opponent Cooperates</th>
+            <th>Opponent Defects</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>You Cooperate</th>
+            <td class="cell reward">3 / 3 <span>Reward</span></td>
+            <td class="cell sucker">0 / 5 <span>Sucker</span></td>
+          </tr>
+          <tr>
+            <th>You Defect</th>
+            <td class="cell tempt">5 / 0 <span>Temptation</span></td>
+            <td class="cell punish">1 / 1 <span>Punishment</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <!-- Step 3: Export -->
-    <section class="card" id="export-section">
-      <h2>
-        <span class="step">3</span>
-        Export
-      </h2>
-      <div class="export-actions">
-        <button id="download-btn" class="btn btn-green" disabled>
-          Download CSV
-        </button>
-        <button id="clear-btn" class="btn btn-red" disabled>
-          Clear All Data
-        </button>
-      </div>
-    </section>
+    <nav class="links">
+      <a href="/arena/" class="link-card">
+        <h3>Strategy Arena</h3>
+        <p>
+          Run round-robin tournaments between built-in strategies.
+          Configure rounds, noise, and compare results with charts.
+        </p>
+      </a>
+      <a href="/devlog/" class="link-card">
+        <h3>Dev Log</h3>
+        <p>
+          Experiment write-ups &mdash; tournament results, strategy analysis,
+          and observations from the lab.
+        </p>
+      </a>
+    </nav>
   </div>
 </BaseLayout>
 
 <style>
-  .app {
-    max-width: 960px;
+  .page {
+    max-width: 760px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
+    padding: 3rem 1.5rem 5rem;
   }
 
   header {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
 
-  .subtitle {
+  .tagline {
+    font-size: 1.15rem;
     color: var(--text-dim);
-    margin-top: 0.25rem;
+    margin-top: 0.5rem;
+    line-height: 1.6;
   }
 
-  .card {
+  .tagline strong {
+    color: var(--text);
+  }
+
+  .intro {
+    margin-bottom: 2.5rem;
+    line-height: 1.75;
+  }
+
+  .intro p {
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .intro strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .intro em {
+    font-style: italic;
+  }
+
+  .payoff-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1.5rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 2.5rem;
   }
 
-  h2 {
-    font-size: 1.1rem;
+  .payoff-card h2 {
     font-weight: 600;
     margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .step {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 50%;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.85rem;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  /* Fields */
-  .field-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
-
-  /* Forms */
-  .inline-form {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .options-row {
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .options-row label {
-    font-size: 0.85rem;
     color: var(--text-dim);
-    white-space: nowrap;
-  }
-
-  .options-row input {
-    flex: 1;
-  }
-
-  input,
-  select {
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 0.5rem 0.75rem;
-    font-family: var(--font);
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  input:focus,
-  select:focus {
-    border-color: var(--accent);
-  }
-
-  input::placeholder {
-    color: var(--text-dim);
-  }
-
-  .btn {
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-family: var(--font);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    white-space: nowrap;
-  }
-
-  .btn:hover {
-    opacity: 0.85;
-  }
-
-  .btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .btn-accent {
-    background: var(--accent);
-    color: #000;
-  }
-
-  .btn-green {
-    background: var(--green);
-    color: #000;
-  }
-
-  .btn-red {
-    background: var(--red);
-    color: #000;
-  }
-
-  /* Entry form */
-  .entry-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  /* Data table */
-  .table-wrapper {
-    overflow-x: auto;
-    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8rem;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
-  }
-
-  th,
-  td {
-    text-align: left;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  th {
-    color: var(--text-dim);
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    position: sticky;
-    top: 0;
-    background: var(--bg-card);
-  }
-
-  tbody tr:hover {
-    background: var(--bg-input);
-  }
-
-  .row-count {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-  }
-
-  .empty-state {
-    color: var(--text-dim);
     font-size: 0.9rem;
   }
 
-  .export-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+  th, td {
+    padding: 0.65rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
   }
 
-  .hidden {
-    display: none !important;
+  thead th {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  tbody th {
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .cell {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .cell span {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 400;
+    font-family: var(--font);
+    color: var(--text-dim);
+    margin-top: 0.15rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .reward { color: var(--green); }
+  .sucker { color: var(--red); }
+  .tempt { color: var(--orange); }
+  .punish { color: var(--text-dim); }
+
+  .links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .link-card {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition:
+      border-color 0.15s,
+      transform 0.15s;
+  }
+
+  .link-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .link-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+
+  .link-card p {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    line-height: 1.55;
   }
 
   @media (max-width: 600px) {
-    .app {
-      padding: 1.25rem 1rem 3rem;
-    }
-
-    .inline-form {
-      flex-direction: column;
-    }
-
-    .entry-form {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
-
-<script>
-  interface Field {
-    name: string;
-    type: "text" | "number" | "date" | "select" | "checkbox";
-    options?: string[];
-  }
-
-  const fields: Field[] = [];
-  const rows: Record<string, string>[] = [];
-
-  // DOM references
-  const fieldList = document.getElementById("field-list")!;
-  const addFieldForm = document.getElementById(
-    "add-field-form",
-  ) as HTMLFormElement;
-  const fieldNameInput = document.getElementById(
-    "field-name-input",
-  ) as HTMLInputElement;
-  const fieldTypeInput = document.getElementById(
-    "field-type-input",
-  ) as HTMLSelectElement;
-  const fieldOptionsInput = document.getElementById(
-    "field-options-input",
-  ) as HTMLInputElement;
-  const optionsRow = document.getElementById("options-row")!;
-  const emptyState = document.getElementById("empty-state")!;
-  const entryForm = document.getElementById("entry-form") as HTMLFormElement;
-  const tableWrapper = document.getElementById("table-wrapper")!;
-  const tableHead = document.getElementById("table-head")!;
-  const tableBody = document.getElementById("table-body")!;
-  const rowCount = document.getElementById("row-count")!;
-  const downloadBtn = document.getElementById(
-    "download-btn",
-  ) as HTMLButtonElement;
-  const clearBtn = document.getElementById("clear-btn") as HTMLButtonElement;
-
-  // Show/hide options input when type changes
-  fieldTypeInput.addEventListener("change", () => {
-    optionsRow.classList.toggle("hidden", fieldTypeInput.value !== "select");
-  });
-
-  // Add a field
-  addFieldForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = fieldNameInput.value.trim();
-    if (!name) return;
-    if (fields.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
-      alert("A field with that name already exists.");
-      return;
-    }
-
-    const type = fieldTypeInput.value as Field["type"];
-    const field: Field = { name, type };
-
-    if (type === "select") {
-      const opts = fieldOptionsInput.value
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean);
-      if (opts.length === 0) {
-        alert("Please enter at least one option for the select field.");
-        return;
-      }
-      field.options = opts;
-    }
-
-    fields.push(field);
-    fieldNameInput.value = "";
-    fieldOptionsInput.value = "";
-    optionsRow.classList.add("hidden");
-    fieldTypeInput.value = "text";
-    fieldNameInput.focus();
-    renderAll();
-  });
-
-  function renderAll() {
-    renderFieldTags();
-    renderEntryForm();
-    renderTable();
-    updateButtons();
-  }
-
-  function renderFieldTags() {
-    fieldList.innerHTML = "";
-    for (let i = 0; i < fields.length; i++) {
-      const f = fields[i];
-      const tag = document.createElement("span");
-      tag.className = "field-tag";
-      const typeLabel =
-        f.type === "select" ? `select(${f.options!.join("|")})` : f.type;
-      tag.innerHTML = `${esc(f.name)} <span class="field-type">${esc(typeLabel)}</span>`;
-      const removeBtn = document.createElement("button");
-      removeBtn.type = "button";
-      removeBtn.textContent = "\u00d7";
-      removeBtn.title = "Remove field";
-      removeBtn.addEventListener("click", () => removeField(i));
-      tag.appendChild(removeBtn);
-      fieldList.appendChild(tag);
-    }
-  }
-
-  function removeField(index: number) {
-    const name = fields[index].name;
-    fields.splice(index, 1);
-    for (const row of rows) {
-      delete row[name];
-    }
-    renderAll();
-  }
-
-  function renderEntryForm() {
-    if (fields.length === 0) {
-      emptyState.classList.remove("hidden");
-      entryForm.classList.add("hidden");
-      return;
-    }
-    emptyState.classList.add("hidden");
-    entryForm.classList.remove("hidden");
-    entryForm.innerHTML = "";
-
-    for (const f of fields) {
-      const group = document.createElement("div");
-      group.className = "form-group";
-
-      const label = document.createElement("label");
-      label.textContent = f.name;
-      group.appendChild(label);
-
-      if (f.type === "select") {
-        const sel = document.createElement("select");
-        sel.name = f.name;
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Select\u2026";
-        sel.appendChild(placeholder);
-        for (const opt of f.options!) {
-          const o = document.createElement("option");
-          o.value = opt;
-          o.textContent = opt;
-          sel.appendChild(o);
-        }
-        group.appendChild(sel);
-      } else if (f.type === "checkbox") {
-        const wrapper = document.createElement("div");
-        wrapper.className = "checkbox-wrapper";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.name = f.name;
-        wrapper.appendChild(cb);
-        const cbLabel = document.createElement("span");
-        cbLabel.textContent = "Yes";
-        cbLabel.style.fontSize = "0.85rem";
-        wrapper.appendChild(cbLabel);
-        group.appendChild(wrapper);
-      } else {
-        const inp = document.createElement("input");
-        inp.type =
-          f.type === "number" ? "number" : f.type === "date" ? "date" : "text";
-        inp.name = f.name;
-        inp.placeholder = f.name;
-        if (f.type === "number") inp.step = "any";
-        group.appendChild(inp);
-      }
-
-      entryForm.appendChild(group);
-    }
-
-    // Submit button
-    const submitGroup = document.createElement("div");
-    submitGroup.className = "form-group submit-group";
-    const spacer = document.createElement("label");
-    spacer.innerHTML = "&nbsp;";
-    submitGroup.appendChild(spacer);
-    const submitBtn = document.createElement("button");
-    submitBtn.type = "submit";
-    submitBtn.className = "btn btn-accent";
-    submitBtn.textContent = "Add Row";
-    submitGroup.appendChild(submitBtn);
-    entryForm.appendChild(submitGroup);
-  }
-
-  // Handle entry form submission
-  entryForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const row: Record<string, string> = {};
-    for (const f of fields) {
-      if (f.type === "checkbox") {
-        const cb = entryForm.querySelector(
-          `input[name="${CSS.escape(f.name)}"]`,
-        ) as HTMLInputElement;
-        row[f.name] = cb?.checked ? "Yes" : "No";
-      } else {
-        const el = entryForm.querySelector(
-          `[name="${CSS.escape(f.name)}"]`,
-        ) as HTMLInputElement | HTMLSelectElement;
-        row[f.name] = el?.value ?? "";
-      }
-    }
-    rows.push(row);
-
-    // Reset form inputs
-    for (const f of fields) {
-      if (f.type === "checkbox") {
-        const cb = entryForm.querySelector(
-          `input[name="${CSS.escape(f.name)}"]`,
-        ) as HTMLInputElement;
-        if (cb) cb.checked = false;
-      } else {
-        const el = entryForm.querySelector(
-          `[name="${CSS.escape(f.name)}"]`,
-        ) as HTMLInputElement | HTMLSelectElement;
-        if (el) el.value = "";
-      }
-    }
-
-    const firstInput = entryForm.querySelector("input, select") as HTMLElement;
-    firstInput?.focus();
-
-    renderTable();
-    updateButtons();
-  });
-
-  function renderTable() {
-    if (rows.length === 0 || fields.length === 0) {
-      tableWrapper.classList.add("hidden");
-      rowCount.classList.add("hidden");
-      return;
-    }
-    tableWrapper.classList.remove("hidden");
-    rowCount.classList.remove("hidden");
-
-    // Head
-    tableHead.innerHTML = "";
-    const headRow = document.createElement("tr");
-    const numTh = document.createElement("th");
-    numTh.textContent = "#";
-    headRow.appendChild(numTh);
-    for (const f of fields) {
-      const th = document.createElement("th");
-      th.textContent = f.name;
-      headRow.appendChild(th);
-    }
-    const actionsTh = document.createElement("th");
-    headRow.appendChild(actionsTh);
-    tableHead.appendChild(headRow);
-
-    // Body
-    tableBody.innerHTML = "";
-    for (let i = 0; i < rows.length; i++) {
-      const tr = document.createElement("tr");
-      const numTd = document.createElement("td");
-      numTd.textContent = String(i + 1);
-      numTd.style.color = "var(--text-dim)";
-      tr.appendChild(numTd);
-      for (const f of fields) {
-        const td = document.createElement("td");
-        td.textContent = rows[i][f.name] ?? "";
-        tr.appendChild(td);
-      }
-      const actionsTd = document.createElement("td");
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "\u00d7";
-      delBtn.title = "Delete row";
-      delBtn.style.cssText =
-        "background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;padding:0.15rem 0.3rem;";
-      delBtn.addEventListener("mouseenter", () => {
-        delBtn.style.color = "var(--red)";
-      });
-      delBtn.addEventListener("mouseleave", () => {
-        delBtn.style.color = "var(--text-dim)";
-      });
-      delBtn.addEventListener("click", () => {
-        rows.splice(i, 1);
-        renderTable();
-        updateButtons();
-      });
-      actionsTd.appendChild(delBtn);
-      tr.appendChild(actionsTd);
-      tableBody.appendChild(tr);
-    }
-
-    rowCount.textContent = `${rows.length} row${rows.length !== 1 ? "s" : ""}`;
-  }
-
-  function updateButtons() {
-    const hasData = rows.length > 0 && fields.length > 0;
-    downloadBtn.disabled = !hasData;
-    clearBtn.disabled = !hasData;
-  }
-
-  // CSV download
-  downloadBtn.addEventListener("click", () => {
-    if (rows.length === 0 || fields.length === 0) return;
-
-    const header = fields.map((f) => csvCell(f.name)).join(",");
-    const body = rows
-      .map((row) => fields.map((f) => csvCell(row[f.name] ?? "")).join(","))
-      .join("\n");
-    const csv = header + "\n" + body + "\n";
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `data-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  function csvCell(value: string): string {
-    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-      return '"' + value.replace(/"/g, '""') + '"';
-    }
-    return value;
-  }
-
-  // Clear all data
-  clearBtn.addEventListener("click", () => {
-    if (!confirm("Clear all collected data? This cannot be undone.")) return;
-    rows.length = 0;
-    renderTable();
-    updateButtons();
-  });
-
-  // Escape HTML
-  function esc(s: string): string {
-    const div = document.createElement("div");
-    div.textContent = s;
-    return div.innerHTML;
-  }
-</script>
-
-<style is:global>
-  .field-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.35rem 0.6rem;
-    font-size: 0.85rem;
-  }
-
-  .field-tag .field-type {
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    font-family: var(--mono);
-  }
-
-  .field-tag button {
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    padding: 0 0 0 0.2rem;
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  .field-tag button:hover {
-    color: var(--red);
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .form-group label {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    font-weight: 500;
-  }
-
-  .submit-group {
-    display: flex;
-    align-items: flex-end;
-  }
-
-  .checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    height: 2.2rem;
-    gap: 0.4rem;
-  }
-
-  .checkbox-wrapper input[type="checkbox"] {
-    width: 1.1rem;
-    height: 1.1rem;
-    accent-color: var(--accent);
+    .page { padding: 2rem 1rem 4rem; }
+    h1 { font-size: 2rem; }
+    .links { grid-template-columns: 1fr; }
   }
 </style>
