@@ -240,11 +240,26 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     top: 0;
   }
 
+  /* Rank column: centered, fixed narrow width */
+  #results-table th:nth-child(1),
+  #results-table td:nth-child(1) {
+    text-align: center;
+    width: 2.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Numeric columns: right-aligned */
+  #results-table th:nth-child(n+3),
+  #results-table td:nth-child(n+3) {
+    text-align: right;
+  }
+
   tbody tr:hover { background: var(--bg-input); }
 
   .rank { color: var(--text-dim); font-family: var(--mono); }
-  .score { font-family: var(--mono); font-weight: 600; }
-  .mono { font-family: var(--mono); }
+  .score { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
   .charts-row {
     display: grid;
