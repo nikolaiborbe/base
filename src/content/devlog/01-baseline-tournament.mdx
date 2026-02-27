@@ -35,11 +35,28 @@ The 10 strategies, roughly ordered from "nice" to "nasty":
 
 <BarChart labels={names} values={scores} />
 
-| Rank | Strategy | Total Score | Avg/Round | Coop Rate |
-|------|----------|-------------|-----------|-----------|
-{result.entries.map((e, i) =>
-  `| ${i + 1} | ${e.name} | ${e.totalScore} | ${e.avgPerRound.toFixed(2)} | ${(e.coopRate * 100).toFixed(0)}% |`
-).join('\n')}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Strategy</th>
+      <th>Total Score</th>
+      <th>Avg/Round</th>
+      <th>Coop Rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    {result.entries.map((e, i) => (
+      <tr>
+        <td>{i + 1}</td>
+        <td>{e.name}</td>
+        <td>{e.totalScore}</td>
+        <td>{e.avgPerRound.toFixed(2)}</td>
+        <td>{(e.coopRate * 100).toFixed(0)}%</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
 
 ## Results: Cooperation Rate
 

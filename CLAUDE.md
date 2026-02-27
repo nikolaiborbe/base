@@ -58,3 +58,27 @@ npm run preview   # Preview production build locally
 ## Deployment
 
 Push to `main` and Netlify handles the rest. No manual deploy steps needed.
+
+## MDX Gotchas
+
+**Tables with dynamic rows must use JSX, not markdown pipe syntax.**
+In MDX, JS expressions are evaluated and their output is inserted as text nodes —
+the result is never re-parsed as markdown. So this is broken:
+
+```mdx
+| Rank | Name |
+|------|------|
+{rows.map(r => `| ${r.rank} | ${r.name} |`).join('\n')}
+```
+
+The JS expression renders as a literal string with `|` characters, not as `<tr>` elements.
+Always write dynamic tables as JSX:
+
+```mdx
+<table>
+  <thead><tr><th>Rank</th><th>Name</th></tr></thead>
+  <tbody>
+    {rows.map(r => <tr><td>{r.rank}</td><td>{r.name}</td></tr>)}
+  </tbody>
+</table>
+```
