@@ -4,7 +4,10 @@ interface Props {
   description?: string;
 }
 
-const { title, description = "Interactive data collection with CSV export" } = Astro.props;
+const {
+  title,
+  description = "A lab for iterated Prisoner's Dilemma strategy research.",
+} = Astro.props;
 import "../styles/global.css";
 ---
 
