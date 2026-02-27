@@ -396,8 +396,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const played: Strategy[] = noiseVal > 0
       ? strategies.map((s) => ({
           ...s,
-          move: (h: Parameters<Strategy["move"]>[0]) => {
-            const m = s.move(h);
+          move: (h: Parameters<Strategy["move"]>[0], rng: Parameters<Strategy["move"]>[1]) => {
+            const m = s.move(h, rng);
             return Math.random() < noiseVal ? (m === "C" ? "D" : "C") : m;
           },
         }))

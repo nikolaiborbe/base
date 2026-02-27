@@ -9,7 +9,7 @@ import BarChart from "../../components/BarChart.astro";
 import { runRoundRobin } from "../../lib/engine/tournament";
 import { allStrategies } from "../../lib/strategies/index";
 
-export const result = runRoundRobin(allStrategies, 200);
+export const result = runRoundRobin(allStrategies, 200, 42);
 export const names = result.entries.map(e => e.name);
 export const scores = result.entries.map(e => e.totalScore);
 export const coops = result.entries.map(e => Math.round(e.coopRate * 100));

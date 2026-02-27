@@ -8,7 +8,13 @@ export interface GameHistory {
 export interface Strategy {
   name: string;
   description: string;
-  move(history: GameHistory): Move;
+  /**
+   * Decide the next move.
+   * @param history  This strategy's move history vs the opponent's.
+   * @param rng      Seeded PRNG supplied by the game runner — use this instead
+   *                 of Math.random() so results are reproducible.
+   */
+  move(history: GameHistory, rng: () => number): Move;
 }
 
 export interface RoundResult {

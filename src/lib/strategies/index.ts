@@ -1,4 +1,6 @@
-import type { Strategy, Move } from "../engine/types";
+import type { Strategy, Move, GameHistory } from "../engine/types";
+
+type RNG = () => number;
 
 // ─── Classic strategies ─────────────────────────────────────────────────────
 
@@ -17,7 +19,7 @@ export const allDefect: Strategy = {
 export const random: Strategy = {
   name: "Random",
   description: "Cooperates or defects with equal probability each round.",
-  move: () => (Math.random() < 0.5 ? "C" : "D"),
+  move: (_h: GameHistory, rng: RNG) => (rng() < 0.5 ? "C" : "D"),
 };
 
 export const titForTat: Strategy = {
@@ -76,10 +78,10 @@ export const generousTFT: Strategy = {
   name: "Generous TFT",
   description:
     "Like TFT but forgives a defection with ~33% probability. Resistant to noise.",
-  move: ({ opponent }) => {
+  move: ({ opponent }, rng: RNG) => {
     if (opponent.length === 0) return "C";
     if (opponent[opponent.length - 1] === "D") {
-      return Math.random() < 0.33 ? "C" : "D";
+      return rng() < 0.33 ? "C" : "D";
     }
     return "C";
   },
@@ -94,28 +96,13 @@ export const generousTFT: Strategy = {
  * p = [p1, p2, p3, p4] are cooperation probabilities given (CC, CD, DC, DD).
  */
 function makeZDExtorter(chi: number): Strategy {
-  const phi = 1 / (2 + chi); // keeps probabilities in [0,1] for chi=3 → phi=0.2
-  // R=3, T=5, S=0, P=1
-  const R = 3,
-    T = 5,
-    S = 0,
-    P = 1;
-  const p1 = phi * (R - P * chi + (chi - 1) * (R - S)) / (T - P); // CC
-  const p2 = phi * (S - P * chi + (chi - 1) * (R - S)) / (T - P); // CD
-  const p3 =
-    phi * ((R - P * chi) * (T - P) + (chi - 1) * (R - S) * (T - P)) /
-    (T - P) /
-    (T - P); // simplified
-  // Use the standard formulation directly:
-  // p = [1 - φ(χ-1)(R-P)/(T-P), φ(χ*S - P)/(T-P) ... ] — let's use numeric values for χ=3
-  // For χ=3, φ=0.2: p1≈0.9, p2≈-0.1→0, p3≈1.1→1, p4≈0.1
-  void p1; void p2; void p3;
-  const probs = { CC: 8/9, CD: 0, DC: 1, DD: 1/9 };
+  // For χ=3, numeric values: p(CC)=8/9, p(CD)=0, p(DC)=1, p(DD)=1/9
+  const probs = { CC: 8 / 9, CD: 0, DC: 1, DD: 1 / 9 };
 
   return {
     name: `ZD Extorter (χ=${chi})`,
     description: `Zero-Determinant extortion strategy (Press & Dyson 2012). Unilaterally enforces that its score exceeds the opponent's by factor χ=${chi} above mutual defection.`,
-    move: ({ mine, opponent }): Move => {
+    move: ({ mine, opponent }, rng: RNG): Move => {
       if (mine.length === 0) return "C";
       const lastMine = mine[mine.length - 1];
       const lastOpponent = opponent[opponent.length - 1];
@@ -124,7 +111,7 @@ function makeZDExtorter(chi: number): Strategy {
       else if (lastMine === "C" && lastOpponent === "D") p = probs.CD;
       else if (lastMine === "D" && lastOpponent === "C") p = probs.DC;
       else p = probs.DD;
-      return Math.random() < p ? "C" : "D";
+      return rng() < p ? "C" : "D";
     },
   };
 }

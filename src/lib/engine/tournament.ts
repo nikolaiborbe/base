@@ -1,14 +1,22 @@
 import type { Strategy, TournamentResult, TournamentEntry } from "./types";
 import { playGame } from "./game";
+import { mulberry32, defaultRng } from "./rng";
 
 /**
  * Round-robin tournament: every pair of strategies plays once.
  * Each strategy also plays itself.
  */
+/**
+ * Round-robin tournament: every pair plays once (including self-play).
+ * @param seed  Optional integer seed. Pass a fixed value in devlog posts so
+ *              results are identical across site rebuilds.
+ */
 export function runRoundRobin(
   strategies: Strategy[],
   rounds: number,
+  seed?: number,
 ): TournamentResult {
+  const rng = seed !== undefined ? mulberry32(seed) : defaultRng;
   const entryMap = new Map<string, TournamentEntry>();
 
   for (const s of strategies) {
@@ -28,7 +36,7 @@ export function runRoundRobin(
     for (let j = i; j < strategies.length; j++) {
       const a = strategies[i];
       const b = strategies[j];
-      const result = playGame(a, b, rounds);
+      const result = playGame(a, b, rounds, rng);
 
       const ea = entryMap.get(a.name)!;
       const eb = entryMap.get(b.name)!;

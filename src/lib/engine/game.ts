@@ -1,4 +1,5 @@
 import type { Strategy, GameResult, Move } from "./types";
+import { defaultRng, type RNG } from "./rng";
 
 // Standard IPD payoff matrix: [scoreA, scoreB]
 // R=3 (mutual coop), T=5 (temptation), S=0 (sucker), P=1 (mutual defect)
@@ -11,6 +12,7 @@ export function playGame(
   stratA: Strategy,
   stratB: Strategy,
   rounds: number,
+  rng: RNG = defaultRng,
 ): GameResult {
   const histA: Move[] = [];
   const histB: Move[] = [];
@@ -19,8 +21,8 @@ export function playGame(
   const roundResults = [];
 
   for (let i = 0; i < rounds; i++) {
-    const moveA = stratA.move({ mine: [...histA], opponent: [...histB] });
-    const moveB = stratB.move({ mine: [...histB], opponent: [...histA] });
+    const moveA = stratA.move({ mine: [...histA], opponent: [...histB] }, rng);
+    const moveB = stratB.move({ mine: [...histB], opponent: [...histA] }, rng);
     const [scoreA, scoreB] = PAYOFF[moveA][moveB];
 
     histA.push(moveA);
