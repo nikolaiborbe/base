@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { playGame } from "./game";
 import { runRoundRobin } from "./tournament";
+import { runMany } from "./stats";
+import { runEvolution } from "./evolution";
 import { mulberry32 } from "./rng";
 import {
   allCooperate,
@@ -285,5 +287,115 @@ describe("runRoundRobin", () => {
   it("AllDefect does NOT finish first in a mixed field", () => {
     const r = runRoundRobin(allStrategies, 200, 42);
     expect(r.entries[0].name).not.toBe("Always Defect");
+  });
+});
+
+// ─── runMany (variance) ───────────────────────────────────────────────────────
+
+describe("runMany", () => {
+  it("is fully reproducible — same (n, baseSeed) → identical stats", () => {
+    const a = runMany(allStrategies, 50, 10, 0);
+    const b = runMany(allStrategies, 50, 10, 0);
+    expect(a.stats.map((s) => s.meanScore)).toEqual(b.stats.map((s) => s.meanScore));
+  });
+
+  it("strategies in an all-deterministic tournament have zero score variance", () => {
+    // When no stochastic strategies are present, no strategy ever calls rng(),
+    // so results are seed-independent and stdScore must be 0.
+    const deterministic = [allCooperate, allDefect, titForTat, titForTwoTats, grudger, pavlov, suspiciousTFT];
+    const result = runMany(deterministic, 100, 20, 0);
+    for (const s of result.stats) {
+      expect(s.stdScore).toBe(0);
+    }
+  });
+
+  it("deterministic strategies have lower variance than stochastic ones in a mixed field", () => {
+    // In a mixed tournament, TFT still has some variance — from its games vs Random,
+    // Generous TFT, ZD. But that variance is much smaller than Random's own variance.
+    const result = runMany(allStrategies, 200, 50, 0);
+    const tft  = result.stats.find((s) => s.name === "Tit for Tat")!;
+    const rand = result.stats.find((s) => s.name === "Random")!;
+    expect(rand.stdScore).toBeGreaterThan(tft.stdScore * 2);
+  });
+
+  it("stochastic strategies have non-zero score variance", () => {
+    const result = runMany(allStrategies, 200, 20, 0);
+    for (const name of ["Random", "Generous TFT", "ZD Extorter (χ=3)"]) {
+      const s = result.stats.find((s) => s.name === name)!;
+      expect(s.stdScore).toBeGreaterThan(0);
+    }
+  });
+
+  it("returns stats sorted by mean score descending", () => {
+    const result = runMany(allStrategies, 50, 5, 0);
+    for (let i = 1; i < result.stats.length; i++) {
+      expect(result.stats[i - 1].meanScore).toBeGreaterThanOrEqual(result.stats[i].meanScore);
+    }
+  });
+
+  it("mean score over many runs equals single-run score in an all-deterministic field", () => {
+    // When only deterministic strategies play, every run produces the same scores.
+    // So mean over N runs must equal any one run exactly.
+    const deterministic = [allCooperate, allDefect, titForTat, grudger, pavlov];
+    const single = runRoundRobin(deterministic, 100, 42);
+    const multi  = runMany(deterministic, 100, 10, 0);
+    const tftSingle = single.entries.find((e) => e.name === "Tit for Tat")!.totalScore;
+    const tftMulti  = multi.stats.find((s)   => s.name === "Tit for Tat")!.meanScore;
+    expect(tftSingle).toBe(tftMulti);
+  });
+});
+
+// ─── runEvolution (replicator dynamics) ──────────────────────────────────────
+
+describe("runEvolution", () => {
+  it("starts with equal shares across all strategies", () => {
+    const r = runEvolution(allStrategies, 50, 10, 42);
+    const expectedShare = 1 / allStrategies.length;
+    for (const s of r.history[0].shares) {
+      expect(s).toBeCloseTo(expectedShare, 10);
+    }
+  });
+
+  it("shares always sum to 1", () => {
+    const r = runEvolution(allStrategies, 100, 50, 42);
+    for (const snap of r.history) {
+      const total = snap.shares.reduce((a, b) => a + b, 0);
+      expect(total).toBeCloseTo(1, 10);
+    }
+  });
+
+  it("is fully reproducible with the same seed", () => {
+    const r1 = runEvolution(allStrategies, 100, 20, 42);
+    const r2 = runEvolution(allStrategies, 100, 20, 42);
+    expect(r1.finalShares).toEqual(r2.finalShares);
+  });
+
+  it("shares are non-negative at every generation", () => {
+    const r = runEvolution(allStrategies, 100, 50, 42);
+    for (const snap of r.history) {
+      for (const s of snap.shares) {
+        expect(s).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it("Always Defect shrinks in a cooperative population (AllCooperate + TFT + AllDefect)", () => {
+    // In a field where TFT and AllCooperate dominate, AllDefect triggers retaliation
+    // and should lose population share over many generations.
+    const field = [allCooperate, titForTat, allDefect];
+    const r = runEvolution(field, 200, 100, 42);
+    const defectStart = r.history[0].shares[2];   // AllDefect starts at 1/3
+    const defectEnd   = r.finalShares[2];
+    expect(defectEnd).toBeLessThan(defectStart);
+  });
+
+  it("returns history of length generations + 1 (including gen 0)", () => {
+    const r = runEvolution(allStrategies, 50, 20, 0);
+    expect(r.history.length).toBe(21);
+  });
+
+  it("history generation indices are sequential from 0", () => {
+    const r = runEvolution(allStrategies, 50, 5, 0);
+    r.history.forEach((snap, i) => expect(snap.generation).toBe(i));
   });
 });

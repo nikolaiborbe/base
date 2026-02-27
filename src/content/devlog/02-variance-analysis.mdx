@@ -1,0 +1,189 @@
+---
+title: "Experiment 02: Score Variance and Ranking Stability Across Random Seeds"
+date: 2026-02-27
+description: "How reliable are single-seed tournament results? We run the 10-strategy baseline 100 times (seeds 0–99) and measure score variance and rank stability for each strategy. Rankings prove robust; score variance is small but non-uniform across strategy types."
+tags: ["methodology", "variance", "reproducibility", "stochastic"]
+---
+
+import BarChart from "../../components/BarChart.astro";
+import { runMany } from "../../lib/engine/stats";
+import { allStrategies } from "../../lib/strategies/index";
+
+export const result   = runMany(allStrategies, 200, 100, 0);
+export const stats    = result.stats;
+export const names    = stats.map(s => s.name);
+export const means    = stats.map(s => parseFloat(s.meanScore.toFixed(1)));
+export const stds     = stats.map(s => parseFloat(s.stdScore.toFixed(1)));
+export const cvs      = stats.map(s => parseFloat((s.stdScore / s.meanScore * 100).toFixed(2)));
+
+## Research Question
+
+Post 01 reported baseline tournament results from a single seeded run (seed=42).
+Three of the ten strategies — **Random**, **Generous TFT**, and **ZD Extorter** — are
+stochastic: their moves are drawn from a probability distribution. This raises an
+immediate methodological question: *how much do those results depend on the particular
+seed chosen?* More precisely, how large is the variance in (a) absolute score and
+(b) finish rank across independent runs?
+
+This is not a minor concern. If score variance is large relative to the gaps between
+strategies, then single-seed conclusions about ranking are unreliable. If it is small,
+single-run results can be trusted for ordinal comparisons and the multi-seed mean can
+serve as a stronger point estimate when reporting absolute scores.
+
+## Methodology
+
+- **Strategies:** All 10 baseline strategies (same field as Experiment 01)
+- **Rounds per match:** 200
+- **Runs:** 100 independent tournaments
+- **Seeds:** 0, 1, 2, …, 99 (consecutive from `baseSeed=0`)
+- **Metric:** For each strategy, compute mean score, population standard deviation,
+  min, max, score range, mean rank, and rank standard deviation across the 100 runs
+- **Reproducibility:** Full experiment re-runs identically by calling
+  `runMany(allStrategies, 200, 100, 0)`
+
+*Note on variance sources.* Even strategies whose `move()` function is deterministic
+(e.g., Tit for Tat, Grudger) can accumulate different scores across seeds, because
+they interact with the three stochastic strategies whose behaviour varies per run.
+The RNG is threaded through `playGame` and consumed only by the stochastic strategies;
+deterministic strategies neither call it nor are directly affected by it — but their
+aggregate score depends on what their stochastic opponents do.
+
+## Results
+
+### Mean Score and Rank Stability
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Strategy</th>
+      <th>Mean Score</th>
+      <th>±Std</th>
+      <th>Min</th>
+      <th>Max</th>
+      <th>Range</th>
+      <th>CV (%)</th>
+      <th>Mean Rank</th>
+      <th>±Rank Std</th>
+    </tr>
+  </thead>
+  <tbody>
+    {stats.map((s, i) => (
+      <tr>
+        <td>{i + 1}</td>
+        <td><strong>{s.name}</strong></td>
+        <td>{s.meanScore.toFixed(1)}</td>
+        <td>{s.stdScore.toFixed(1)}</td>
+        <td>{s.minScore}</td>
+        <td>{s.maxScore}</td>
+        <td>{s.maxScore - s.minScore}</td>
+        <td>{(s.stdScore / s.meanScore * 100).toFixed(2)}</td>
+        <td>{s.meanRank.toFixed(2)}</td>
+        <td>{s.stdRank.toFixed(2)}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+*CV = coefficient of variation (std / mean × 100). Lower = more stable score.*
+
+### Mean Score (100-run average)
+
+<BarChart labels={names} values={means} height="280px" />
+
+### Coefficient of Variation by Strategy
+
+<BarChart labels={names} values={cvs} suffix="%" height="280px" />
+
+## Analysis
+
+### 1. Rankings are overwhelmingly stable
+
+The most important finding is that **rank standard deviations are near-zero for
+most strategies.** The bottom four strategies — ZD Extorter, Random, Suspicious TFT,
+and Always Defect — have rank std = 0.00, meaning their finish positions (7th through
+10th) are completely invariant across all 100 seeds. A different seed never changes
+who finishes last.
+
+At the top of the table, Tit for Two Tats, Generous TFT, and Tit for Tat occasionally
+swap positions (rank stds of 0.20, 0.57, 0.50 respectively), but all three remain
+clearly separated from 4th place by a large gap. Their competition is real but
+consequential only for determining first vs. second, not for the broader conclusion
+that TFT-family strategies dominate.
+
+**Methodological implication:** Ordinal conclusions from single-seed runs are reliable.
+The baseline finding — that cooperative, retaliatory strategies outperform
+unconditional or exploitative ones — is not an artifact of seed choice.
+
+### 2. Score variance is small in absolute terms
+
+The highest coefficient of variation in the field is **Random at CV=1.09%**. All
+strategies have CV below 1.1%. This means a single-seed score is within ~2 standard
+deviations of the true mean with high probability. The 264-point range for Random
+(4295–4559) looks large in absolute terms but represents only ~6% of its mean score.
+
+For quantitative comparisons between strategies with similar mean scores, multi-seed
+means are preferable. But for strategies separated by large gaps (e.g., Always
+Cooperate vs. Always Defect differ by ~1000 points), single-seed results are entirely
+sufficient.
+
+### 3. Pavlov shows surprisingly high variance for a deterministic strategy
+
+Among the seven strategies whose `move()` function contains no randomness, **Pavlov
+has the highest score variance** (std=36.7, CV=0.73%) — higher than Generous TFT
+(CV=0.42%) and well above TFT (CV=0.29%).
+
+This is not a paradox but a structural property. Pavlov's Win-Stay/Lose-Shift rule
+creates **high sensitivity to opponent behaviour**: a single unexpected defection
+from a stochastic opponent triggers a mode switch (e.g., from CC to CD or DC), and
+the resulting trajectory depends entirely on subsequent interactions. This feedback
+amplifies noise from stochastic opponents into larger score swings than more
+memoryless strategies experience.
+
+By contrast, Tit for Tat's mirror rule produces outcomes that converge quickly to a
+stable pattern regardless of what the stochastic opponent does — hence lower variance.
+Grudger's behaviour is also sensitive (one defection from a probabilistic opponent
+permanently changes its mode) but it recovers less well, producing variance in the
+middle of the distribution (std=33.5).
+
+### 4. Correction to Experiment 01
+
+Post 01 stated that ZD Extorter's "results vary between runs." This is technically
+true for score (std=38.4, range=210) but misleading: the **rank never varies**
+(rank std=0.00). ZD Extorter always finishes 7th. The score variance is driven by
+its matches against Random and Generous TFT, but these fluctuations are not large
+enough to change the ordinal outcome. The original claim should have been: *the
+absolute score is a point estimate, but the rank is stable.*
+
+## Conclusions
+
+1. **Single-seed rankings are reliable.** Across 100 independent seeds, rank order is
+   stable or nearly stable for all strategies. The ordinal conclusions from Experiment
+   01 hold unconditionally.
+
+2. **Score variance is small (CV < 2% for all strategies).** Reporting the 100-run
+   mean reduces noise further and is preferable when comparing strategies with similar
+   scores, but single-seed results are not materially misleading.
+
+3. **Pavlov's variance is structurally informative.** High variance in a deterministic
+   strategy signals that its decision rule has strong sensitivity to the behaviour of
+   stochastic opponents. This is a property worth investigating further — particularly
+   under noise, where *all* strategies become probabilistic.
+
+4. **Standard practice going forward:** devlog experiments will report both a pinned
+   single-seed result (for exact reproducibility) and, when stochastic strategies are
+   involved or score margins are close, a multi-seed mean ± std. The `runMany()`
+   function makes this straightforward.
+
+## Next Steps
+
+The next experiment introduces **environmental noise** — a probability ε that any
+move is flipped before the opponent observes it. Under noise, every strategy becomes
+stochastic, and the question becomes structural: which strategies are *robust* to
+miscommunication? Specifically:
+
+- Does Generous TFT overtake Tit for Tat as noise increases (as theory predicts)?
+- At what noise level does Grudger — which retaliates permanently to a single
+  defection — collapse in score?
+- Does the rank stability observed here break down under noise, or does the ordering
+  remain robust?
