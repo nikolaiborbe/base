@@ -244,30 +244,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
   th, td {
     text-align: left;
-    padding: 0.5rem 1.25rem;
-    white-space: nowrap;
-  }
-
-  thead tr {
-    border-bottom: 2px solid var(--border);
-  }
-
-  tbody tr {
+    padding: 0.55rem 1rem;
     border-bottom: 1px solid var(--border);
-  }
-
-  tbody tr:last-child {
-    border-bottom: none;
+    white-space: nowrap;
   }
 
   th {
     color: var(--text-dim);
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
+    letter-spacing: 0.04em;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
   }
 
   /* Rank column header: centered */
