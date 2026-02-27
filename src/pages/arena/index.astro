@@ -60,11 +60,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <div class="charts-row">
         <div class="chart-wrap card">
           <h3>Total Score</h3>
-          <canvas id="score-chart"></canvas>
+          <div class="canvas-container">
+            <canvas id="score-chart"></canvas>
+          </div>
         </div>
         <div class="chart-wrap card">
           <h3>Cooperation Rate</h3>
-          <canvas id="coop-chart"></canvas>
+          <div class="canvas-container">
+            <canvas id="coop-chart"></canvas>
+          </div>
         </div>
       </div>
 
@@ -250,14 +254,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
 
   .chart-wrap {
-    min-height: 260px;
     display: flex;
     flex-direction: column;
   }
 
-  .chart-wrap canvas {
-    flex: 1;
-    min-height: 200px;
+  .chart-wrap .canvas-container {
+    position: relative;
+    height: 260px;
+    flex-shrink: 0;
   }
 
   .matrix-wrap {
