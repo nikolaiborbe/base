@@ -270,26 +270,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     padding-bottom: 0.65rem;
   }
 
-  /* Rank column: centered, fixed narrow width */
-  #results-table th:nth-child(1),
-  #results-table td:nth-child(1) {
+  /* Rank column header: centered */
+  #results-table th:nth-child(1) {
     text-align: center;
     width: 2.5rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
 
-  /* Numeric columns: right-aligned */
-  #results-table th:nth-child(n+3),
-  #results-table td:nth-child(n+3) {
+  /* Numeric column headers: right-aligned */
+  #results-table th:nth-child(n+3) {
     text-align: right;
   }
 
   tbody tr:hover { background: var(--bg-input); }
-
-  .rank { color: var(--text-dim); font-family: var(--mono); }
-  .score { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
   .charts-row {
     display: grid;
@@ -555,6 +549,30 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 </script>
 
 <style is:global>
+  /* TD styles must be global — tbody rows are JS-generated and don't get Astro's scoping attribute */
+  #results-table td:nth-child(1) {
+    text-align: center;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  #results-table td:nth-child(n+3) {
+    text-align: right;
+  }
+
+  #results-table .score {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #results-table .mono {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
   .strat-label {
     display: inline-flex;
     align-items: center;

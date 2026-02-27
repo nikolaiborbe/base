@@ -59,6 +59,15 @@ npm run preview   # Preview production build locally
 
 Push to `main` and Netlify handles the rest. No manual deploy steps needed.
 
+## Astro Scoped CSS Gotcha
+
+**Scoped styles don't apply to JS-generated DOM elements.**
+Astro's `<style>` block rewrites selectors to `selector[data-astro-cid-xxx]`. Only elements
+in the static template receive that attribute. Any elements created via `document.createElement`
+at runtime never get it, so scoped CSS rules silently don't match them.
+
+For styles that target JS-generated elements, use `<style is:global>` (or inline styles in the JS).
+
 ## MDX Gotchas
 
 **Tables with dynamic rows must use JSX, not markdown pipe syntax.**
