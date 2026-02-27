@@ -1,0 +1,512 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Strategy Arena — IPD Lab"
+  description="Test and compare iterated Prisoner's Dilemma strategies in a round-robin tournament."
+>
+  <div class="page">
+    <header>
+      <h1>Strategy Arena</h1>
+      <p class="subtitle">
+        Run round-robin tournaments between IPD strategies. All computation runs
+        in your browser.
+      </p>
+    </header>
+
+    <section class="controls card">
+      <div class="control-row">
+        <div class="field">
+          <label>Rounds per match</label>
+          <input id="rounds-input" type="number" value="200" min="10" max="5000" step="10" />
+        </div>
+        <div class="field">
+          <label>Noise (prob. of flipped move)</label>
+          <input id="noise-input" type="number" value="0" min="0" max="0.5" step="0.01" />
+        </div>
+        <button id="run-btn" class="btn btn-accent">Run Tournament</button>
+      </div>
+
+      <div class="strategy-grid" id="strategy-grid">
+        <!-- populated by JS -->
+      </div>
+      <div class="select-row">
+        <button id="select-all-btn" class="btn btn-sm">Select all</button>
+        <button id="select-none-btn" class="btn btn-sm">Select none</button>
+      </div>
+    </section>
+
+    <section id="results" class="hidden">
+      <h2>Results</h2>
+      <p class="results-meta" id="results-meta"></p>
+
+      <div class="card table-card">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Strategy</th>
+              <th>Total Score</th>
+              <th>Avg / Round</th>
+              <th>Coop Rate</th>
+              <th>W / D / L</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-wrap card">
+          <h3>Total Score</h3>
+          <canvas id="score-chart"></canvas>
+        </div>
+        <div class="chart-wrap card">
+          <h3>Cooperation Rate</h3>
+          <canvas id="coop-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Head-to-Head Matrix <span class="hint">(row score vs column)</span></h3>
+        <div class="matrix-wrap">
+          <table id="matrix-table" class="matrix"></table>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 5rem;
+  }
+
+  header {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .control-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .field label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  input[type="number"] {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 0.45rem 0.75rem;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    width: 9rem;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.25rem;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .btn-sm {
+    background: var(--bg-input);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .strategy-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .select-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .hint {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-dim);
+  }
+
+  .results-meta {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+    font-family: var(--mono);
+  }
+
+  .table-card {
+    overflow-x: auto;
+    padding: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th {
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+  }
+
+  tbody tr:hover { background: var(--bg-input); }
+
+  .rank { color: var(--text-dim); font-family: var(--mono); }
+  .score { font-family: var(--mono); font-weight: 600; }
+  .mono { font-family: var(--mono); }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .chart-wrap {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-wrap canvas {
+    flex: 1;
+    min-height: 200px;
+  }
+
+  .matrix-wrap {
+    overflow-x: auto;
+  }
+
+  .matrix th, .matrix td {
+    text-align: center;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: 60px;
+  }
+
+  .matrix th.row-header {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.8rem;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 700px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .control-row { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<script>
+  import { runRoundRobin } from "../../lib/engine/tournament";
+  import { allStrategies } from "../../lib/strategies/index";
+  import type { Strategy } from "../../lib/engine/types";
+  import Chart from "chart.js/auto";
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let scoreChart: Chart | null = null;
+  let coopChart: Chart | null = null;
+
+  // ── Strategy checkboxes ────────────────────────────────────────────────────
+  const grid = document.getElementById("strategy-grid")!;
+
+  for (const s of allStrategies) {
+    const label = document.createElement("label");
+    label.className = "strat-label";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = s.name;
+    cb.checked = true;
+    cb.dataset.name = s.name;
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(s.name));
+    label.title = s.description;
+    grid.appendChild(label);
+  }
+
+  document.getElementById("select-all-btn")!.addEventListener("click", () => {
+    grid.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach((cb) => (cb.checked = true));
+  });
+  document.getElementById("select-none-btn")!.addEventListener("click", () => {
+    grid.querySelectorAll<HTMLInputElement>("input[type=checkbox]").forEach((cb) => (cb.checked = false));
+  });
+
+  // ── Run tournament ─────────────────────────────────────────────────────────
+  document.getElementById("run-btn")!.addEventListener("click", () => {
+    const selected = new Set(
+      [...grid.querySelectorAll<HTMLInputElement>("input:checked")].map((cb) => cb.value),
+    );
+    const strategies: Strategy[] = allStrategies.filter((s) => selected.has(s.name));
+
+    if (strategies.length < 2) {
+      alert("Select at least 2 strategies.");
+      return;
+    }
+
+    const rounds = Math.max(
+      10,
+      parseInt((document.getElementById("rounds-input") as HTMLInputElement).value, 10) || 200,
+    );
+
+    const noiseVal = parseFloat((document.getElementById("noise-input") as HTMLInputElement).value) || 0;
+
+    // Wrap strategies with noise if applicable
+    const played: Strategy[] = noiseVal > 0
+      ? strategies.map((s) => ({
+          ...s,
+          move: (h: Parameters<Strategy["move"]>[0]) => {
+            const m = s.move(h);
+            return Math.random() < noiseVal ? (m === "C" ? "D" : "C") : m;
+          },
+        }))
+      : strategies;
+
+    const result = runRoundRobin(played, rounds);
+
+    // Show results section
+    document.getElementById("results")!.classList.remove("hidden");
+
+    // Meta line
+    document.getElementById("results-meta")!.textContent =
+      `${result.strategyCount} strategies · ${result.roundsPerMatch} rounds/match · ${noiseVal > 0 ? `noise=${noiseVal}` : "no noise"}`;
+
+    // Results table
+    const tbody = document.getElementById("results-body")!;
+    tbody.innerHTML = "";
+    for (let i = 0; i < result.entries.length; i++) {
+      const e = result.entries[i];
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="rank">${i + 1}</td>
+        <td><strong>${e.name}</strong></td>
+        <td class="score">${e.totalScore}</td>
+        <td class="mono">${e.avgPerRound.toFixed(3)}</td>
+        <td class="mono">${(e.coopRate * 100).toFixed(1)}%</td>
+        <td class="mono">${e.wins}W / ${e.draws}D / ${e.losses}L</td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // Chart colours
+    const COLORS = [
+      "#58a6ff", "#3fb950", "#d29922", "#f85149",
+      "#bc8cff", "#ff7b72", "#79c0ff", "#56d364",
+      "#e3b341", "#ff6e96",
+    ];
+    const labels = result.entries.map((e) => e.name);
+    const scores = result.entries.map((e) => e.totalScore);
+    const coops = result.entries.map((e) => parseFloat((e.coopRate * 100).toFixed(1)));
+    const colors = labels.map((_, i) => COLORS[i % COLORS.length]);
+
+    // Score chart
+    if (scoreChart) scoreChart.destroy();
+    const scoreCtx = (document.getElementById("score-chart") as HTMLCanvasElement).getContext("2d")!;
+    scoreChart = new Chart(scoreCtx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ data: scores, backgroundColor: colors, borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: "#7d8590" }, grid: { color: "#30363d" } },
+          y: { ticks: { color: "#e6edf3", font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+
+    // Coop chart
+    if (coopChart) coopChart.destroy();
+    const coopCtx = (document.getElementById("coop-chart") as HTMLCanvasElement).getContext("2d")!;
+    coopChart = new Chart(coopCtx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ data: coops, backgroundColor: colors, borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { min: 0, max: 100, ticks: { color: "#7d8590", callback: (v) => `${v}%` }, grid: { color: "#30363d" } },
+          y: { ticks: { color: "#e6edf3", font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+
+    // Head-to-head matrix
+    const matrixTable = document.getElementById("matrix-table")!;
+    matrixTable.innerHTML = "";
+    const names = result.entries.map((e) => e.name);
+
+    // Build lookup: score of A vs B
+    const matchLookup = new Map<string, number>();
+    for (const e of result.entries) {
+      for (const m of e.matches) {
+        matchLookup.set(`${e.name}::${m.opponent}`, m.score);
+      }
+    }
+
+    // Header row
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    headerRow.appendChild(document.createElement("th")); // empty corner
+    for (const name of names) {
+      const th = document.createElement("th");
+      th.textContent = name.length > 10 ? name.slice(0, 9) + "…" : name;
+      th.title = name;
+      headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    matrixTable.appendChild(thead);
+
+    // Body rows
+    const tbody2 = document.createElement("tbody");
+    for (const rowName of names) {
+      const tr = document.createElement("tr");
+      const th = document.createElement("th");
+      th.className = "row-header";
+      th.textContent = rowName.length > 12 ? rowName.slice(0, 11) + "…" : rowName;
+      th.title = rowName;
+      tr.appendChild(th);
+      for (const colName of names) {
+        const td = document.createElement("td");
+        const score = matchLookup.get(`${rowName}::${colName}`);
+        td.textContent = score !== undefined ? String(score) : "—";
+        td.className = "mono";
+        // Color-code: higher is greener
+        if (score !== undefined) {
+          const max = rounds * 5;
+          const ratio = score / max;
+          td.style.color = ratio > 0.5 ? "var(--green)" : ratio < 0.25 ? "var(--red)" : "var(--text-dim)";
+        }
+        tr.appendChild(td);
+      }
+      tbody2.appendChild(tr);
+    }
+    matrixTable.appendChild(tbody2);
+
+    document.getElementById("results")!.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+</script>
+
+<style is:global>
+  .strat-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s;
+  }
+
+  .strat-label:hover {
+    border-color: var(--accent);
+  }
+
+  .strat-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+</style>
