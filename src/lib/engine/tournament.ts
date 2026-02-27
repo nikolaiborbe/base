@@ -3,13 +3,9 @@ import { playGame } from "./game";
 import { mulberry32, defaultRng } from "./rng";
 
 /**
- * Round-robin tournament: every pair of strategies plays once.
- * Each strategy also plays itself.
- */
-/**
  * Round-robin tournament: every pair plays once (including self-play).
- * @param seed  Optional integer seed. Pass a fixed value in devlog posts so
- *              results are identical across site rebuilds.
+ * @param seed  Optional integer seed. Pin a value in devlog posts so results
+ *              are identical across site rebuilds.
  */
 export function runRoundRobin(
   strategies: Strategy[],

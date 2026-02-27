@@ -1,6 +1,5 @@
 import type { Strategy, Move, GameHistory } from "../engine/types";
-
-type RNG = () => number;
+import type { RNG } from "../engine/rng";
 
 // ─── Classic strategies ─────────────────────────────────────────────────────
 
@@ -90,33 +89,27 @@ export const generousTFT: Strategy = {
 // ─── Zero-Determinant strategies (Press & Dyson 2012) ───────────────────────
 
 /**
- * A ZD extortioner with χ=3 (extortion factor) and φ=1/6.
- * Enforces: score(self) - P = χ * (score(opponent) - P)
- * where P=1 is the mutual defection payoff.
- * p = [p1, p2, p3, p4] are cooperation probabilities given (CC, CD, DC, DD).
+ * ZD Extorter with χ=3 (extortion factor), φ=1/6.
+ * Cooperation probabilities derived from standard payoffs (R=3,T=5,S=0,P=1):
+ *   p(CC)=8/9, p(CD)=0, p(DC)=1, p(DD)=1/9
+ * Enforces: score(self) − P = 3 × (score(opponent) − P) over long runs.
  */
-function makeZDExtorter(chi: number): Strategy {
-  // For χ=3, numeric values: p(CC)=8/9, p(CD)=0, p(DC)=1, p(DD)=1/9
-  const probs = { CC: 8 / 9, CD: 0, DC: 1, DD: 1 / 9 };
-
-  return {
-    name: `ZD Extorter (χ=${chi})`,
-    description: `Zero-Determinant extortion strategy (Press & Dyson 2012). Unilaterally enforces that its score exceeds the opponent's by factor χ=${chi} above mutual defection.`,
-    move: ({ mine, opponent }, rng: RNG): Move => {
-      if (mine.length === 0) return "C";
-      const lastMine = mine[mine.length - 1];
-      const lastOpponent = opponent[opponent.length - 1];
-      let p: number;
-      if (lastMine === "C" && lastOpponent === "C") p = probs.CC;
-      else if (lastMine === "C" && lastOpponent === "D") p = probs.CD;
-      else if (lastMine === "D" && lastOpponent === "C") p = probs.DC;
-      else p = probs.DD;
-      return rng() < p ? "C" : "D";
-    },
-  };
-}
-
-export const zdExtorter = makeZDExtorter(3);
+export const zdExtorter: Strategy = {
+  name: "ZD Extorter (χ=3)",
+  description:
+    "Zero-Determinant extortion strategy (Press & Dyson 2012). Unilaterally enforces its score exceeds the opponent's by factor χ=3 above mutual defection.",
+  move: ({ mine, opponent }, rng: RNG): Move => {
+    if (mine.length === 0) return "C";
+    const lastMine = mine[mine.length - 1];
+    const lastOpp  = opponent[opponent.length - 1];
+    const p =
+      lastMine === "C" && lastOpp === "C" ? 8 / 9 :
+      lastMine === "C" && lastOpp === "D" ? 0     :
+      lastMine === "D" && lastOpp === "C" ? 1     :
+                                            1 / 9;
+    return rng() < p ? "C" : "D";
+  },
+};
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
