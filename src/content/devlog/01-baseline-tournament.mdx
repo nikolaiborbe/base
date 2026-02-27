@@ -1,0 +1,66 @@
+---
+title: "Baseline Tournament: Classic Strategies"
+date: 2026-02-27
+description: "Running the first round-robin with 10 classic IPD strategies over 200 rounds. Tit for Tat variants dominate, Always Defect does worse than expected."
+tags: ["tournament", "classic", "baseline"]
+---
+
+import BarChart from "../../components/BarChart.astro";
+import { runRoundRobin } from "../../lib/engine/tournament";
+import { allStrategies } from "../../lib/strategies/index";
+
+export const result = runRoundRobin(allStrategies, 200);
+export const names = result.entries.map(e => e.name);
+export const scores = result.entries.map(e => e.totalScore);
+export const coops = result.entries.map(e => Math.round(e.coopRate * 100));
+
+The first experiment: a standard round-robin tournament with all 10 built-in strategies, 200 rounds per match. No noise. Every strategy plays every other strategy (and itself) once.
+
+## The Lineup
+
+The 10 strategies, roughly ordered from "nice" to "nasty":
+
+- **Always Cooperate** — unconditional cooperation
+- **Tit for Tat (TFT)** — cooperate first, then mirror opponent's last move
+- **Tit for Two Tats** — only retaliates after two consecutive defections
+- **Generous TFT** — like TFT but forgives ~33% of defections
+- **Pavlov** — Win-Stay, Lose-Shift
+- **Grudger** — cooperates until the first defection, then defects forever
+- **Suspicious TFT** — like TFT but opens with a defection
+- **ZD Extorter (χ=3)** — a Press & Dyson zero-determinant strategy
+- **Random** — 50/50 coin flip each round
+- **Always Defect** — unconditional defection
+
+## Results: Total Score
+
+<BarChart labels={names} values={scores} />
+
+| Rank | Strategy | Total Score | Avg/Round | Coop Rate |
+|------|----------|-------------|-----------|-----------|
+{result.entries.map((e, i) =>
+  `| ${i + 1} | ${e.name} | ${e.totalScore} | ${e.avgPerRound.toFixed(2)} | ${(e.coopRate * 100).toFixed(0)}% |`
+).join('\n')}
+
+## Results: Cooperation Rate
+
+<BarChart labels={names} values={coops} suffix="%" height="280px" />
+
+## What Stands Out
+
+**Nice strategies do well.** The top spots are occupied by strategies that cooperate by default and only retaliate when provoked. This is the core Axelrod result: being nice (never defecting first) is a winning trait in round-robin tournaments.
+
+**TFT variants cluster at the top.** Tit for Tat, Generous TFT, and Tit for Two Tats are all strong. Their mutual games produce sustained cooperation (score ≈ 3/round), and they don't lose *badly* to anyone — they quickly retaliate against exploiters.
+
+**Pavlov is competitive.** Win-Stay, Lose-Shift does well because it self-corrects. If it accidentally defects against a cooperator, the punishment (getting only 1 point) makes it switch back to cooperation. It naturally stabilizes on mutual cooperation.
+
+**Always Defect underperforms.** In a one-shot game, defection is dominant. In the iterated game, the story changes. Always Defect gets exploited by no one (since it never cooperates to be exploited), but it also can never *build* cooperation. Against TFT, it triggers permanent mutual defection (1 point/round), while TFT earns 3/round against cooperators.
+
+**ZD Extorter: mixed results.** The extortioner can extract surplus from adaptive strategies, but against unconditional strategies it has no leverage. Its probabilistic play pattern means results vary between runs.
+
+## Next Steps
+
+- **Add noise** — real interactions have miscommunication. How do strategies hold up when moves are randomly flipped 5% of the time?
+- **Evolutionary dynamics** — instead of round-robin scoring, let population sizes change based on fitness. Which strategies survive?
+- **Custom strategies** — build a strategy editor so users can define their own and test them in the arena.
+
+*Run this tournament yourself in the [Strategy Arena](/arena/).*

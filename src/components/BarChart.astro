@@ -1,0 +1,73 @@
+---
+interface Props {
+  labels: string[];
+  values: number[];
+  suffix?: string;
+  height?: string;
+}
+
+const { labels, values, suffix = "", height = "320px" } = Astro.props;
+
+const id = `chart-${Math.random().toString(36).slice(2, 9)}`;
+const chartData = JSON.stringify({ labels, values, suffix });
+---
+
+<div class="chart-container" style={`height:${height}`}>
+  <canvas id={id} data-chart={chartData}></canvas>
+</div>
+
+<script>
+  import Chart from "chart.js/auto";
+
+  const COLORS = [
+    "#58a6ff", "#3fb950", "#d29922", "#f85149",
+    "#bc8cff", "#ff7b72", "#79c0ff", "#56d364",
+    "#e3b341", "#ff6e96",
+  ];
+
+  document.querySelectorAll<HTMLCanvasElement>("canvas[data-chart]").forEach((canvas) => {
+    const raw = canvas.dataset.chart;
+    if (!raw) return;
+    const { labels, values, suffix } = JSON.parse(raw) as {
+      labels: string[];
+      values: number[];
+      suffix: string;
+    };
+
+    const colors = labels.map((_, i) => COLORS[i % COLORS.length]);
+
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: colors, borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: {
+              color: "#7d8590",
+              callback: (v) => `${v}${suffix}`,
+            },
+            grid: { color: "#30363d" },
+          },
+          y: {
+            ticks: { color: "#e6edf3", font: { size: 11 } },
+            grid: { display: false },
+          },
+        },
+      },
+    });
+  });
+</script>
+
+<style>
+  .chart-container {
+    width: 100%;
+    margin: 1rem 0 1.5rem;
+  }
+</style>
