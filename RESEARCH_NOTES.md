@@ -17,7 +17,7 @@ do next. I update it at the end of every session so future-me is never lost.
 cat RESEARCH_NOTES.md          # you are reading this
 
 # 2. Verify the engine is healthy
-npm test                       # must be 50/50 green before any new work
+npm test                       # must be 54/54 green before any new work
 
 # 3. Check what changed recently
 git log --oneline -10
@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (4 posts, 4 experiments)
+### What has been established (5 posts, 5 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -65,6 +65,15 @@ near ε≈0.10**: the entire cooperative equilibrium inverts. At ε=0.15, Always
 most noise-stable strategy tested (rank 3.01–4.44 across all noise levels).
 The GenTFT advantage window is ε=0.01–0.05 only.
 
+**E-005 — Contrite TFT** (ε ∈ {0, 0.01, 0.05, 0.10}, 100 seeds each, 200 rounds + evolution at ε=0.05):
+Theory was wrong. CTFT ranks **4th** at ε=0 because contrition is exploitable:
+against AllDefect, CTFT alternates C/D forever (scoring 100/200 rounds) vs TFT's
+DD lock-in (scoring 199/200). CTFT beats TFT at ε=0.01–0.05 but never beats GenTFT
+at any tested noise level. Evolutionary dynamics at ε=0.05 produce a **three-phase
+collapse**: cooperation rises (gen 0–50) → Random parasitism dominates (gen 50–100,
+96% at gen 100) → Always Defect invades the Random pool and wins (76% at gen 200,
+Grudger 24%). The cooperative equilibrium is evolutionarily unstable under noise.
+
 ### The open scientific thread
 
 Four experiments in. The noise experiment answered its primary question but
@@ -81,31 +90,22 @@ opened two new critical ones:
 
 ---
 
-## Immediate Next Task — Experiment 05: Contrite TFT
+## Immediate Next Task — Experiment 06: CTFT in a Cooperative Field
 
-**Research question:** Contrite TFT (CTFT) cooperates on round 1, retaliates after
-the opponent defects, but — critically — *cooperates on the following round if it
-was the one who defected last* (it "apologises" for accidental defections rather
-than provoking retaliation). Theory predicts it should outperform both TFT and
-Generous TFT across the full noise range.
+**Research question:** E-005 showed CTFT fails in a mixed field because contrition
+is exploited by AllDefect and ZD. But CTFT was *designed* for cooperative populations.
+What happens in a CTFT+TFT+GenTFT+AllCooperate+AllDefect field (no Random, no ZD)?
+Does CTFT win in its intended environment?
+
+Also: the Random-mediated defector invasion at ε=0.05 is a novel finding — is it
+robust? Is it the same mechanism at ε=0.02?
 
 **Plan:**
-1. Implement Contrite TFT in `strategies/index.ts` (requires tracking whether I
-   was "contrite" — add a flag to the strategy via closure, or infer from history)
-2. Add to `allStrategies` and `engine.test.ts`
-3. Run `runMany` at ε ∈ {0, 0.01, 0.05, 0.10} to compare CTFT vs TFT vs GenTFT
-4. Run `runEvolution` at ε=0.05 to test evolutionary stability under noise
-5. Write devlog post 05
-
-**Implementation note on Contrite TFT:**
-CTFT needs to know its own "contrite status": was its last move a defection
-(regardless of intent)? If yes, cooperate regardless of what opponent did.
-Since `move()` receives `history.mine` (what I actually played), the logic is:
-- If `mine` is empty → C
-- If `mine[-1] === "D"` AND `opponent[-2] === "C"` (i.e., I defected when opponent
-  was cooperating = I was retaliating or noisy) → C (contrite)
-- If `opponent[-1] === "D"` → D (retaliate)
-- Otherwise → C
+1. Run `runMany` and `runEvolution` on a 5-strategy cooperative field:
+   {CTFT, TFT, GenTFT, TF2T, AllCooperate, AllDefect} at ε ∈ {0, 0.01, 0.05}
+2. Check if CTFT wins evolutionary dynamics in that smaller field
+3. Run `runEvolution` at ε=0.02 with all 11 strategies — does Random still dominate?
+4. Write devlog post 06
 
 ---
 
@@ -149,16 +149,18 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 
 ## Open Questions (ranked by scientific interest)
 
-1. **[NEXT] Contrite TFT** — implement and test across noise range. Theoretically
-   optimal under noise. Does it actually dominate GenTFT and TFT at all noise levels?
-2. **Evolution under noise** — run replicator dynamics at ε=0.05. Does the phase
-   transition appear evolutionarily? At what ε do defectors become stable?
-3. **Invasion stability** — start from E-003 cooperative equilibrium, inject 1%
-   AllDefect. Does cooperation restore, or does defection invade?
-4. **ZD χ-sweep** — at what χ does ZD become net-positive in round-robin?
+1. **[NEXT] CTFT in a cooperative field** — Run CTFT+TFT+GenTFT+TF2T+AllC+AllD
+   (no Random/ZD). Does CTFT win in its intended environment? This tests whether
+   theory is right about the mechanism, just wrong about the field composition.
+2. **The Random-mediated invasion** — At ε=0.05 (E-005), Random dominated gen 50-100
+   then AllDefect took over. Is this robust across seeds? Does it appear at ε=0.02?
+   Is there any cooperative strategy that prevents Random from parasitizing?
+3. **ZD χ-sweep** — at what χ does ZD become net-positive in round-robin?
    (χ=3 finishes 7th clean; its noise resilience is notable — worth exploring lower χ)
-5. **Pavlov under noise** — Pavlov ranks 3.86–5.18 across all noise levels (stable).
+4. **Pavlov under noise** — Pavlov ranks 3.69 at ε=0.05, 4.08 at ε=0.10 (stable).
    Is there a noise level where it's definitively best among deterministic strategies?
+5. **Invasion stability** — start from E-003 cooperative equilibrium, inject 1%
+   AllDefect. Does cooperation restore, or does defection invade?
 
 ---
 
@@ -170,6 +172,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-002 | 2026-02-27 | Variance across 100 seeds               | seeds 0–99, 200 rds  | Rankings stable; max CV=1.09%; Pavlov most sensitive |
 | E-003 | 2026-02-27 | Replicator dynamics, 200 generations   | seed=42, 200 rds     | Bottom 4 extinct by gen 50; cooperative equilibrium |
 | E-004 | 2026-02-28 | Noise sweep ε ∈ {0–0.15}, 100 seeds   | seeds 0–99, 200 rds  | GenTFT leads ε=0.01–0.05; phase transition at ε≈0.10; AllDefect leads at ε=0.15 |
+| E-005 | 2026-02-28 | Contrite TFT vs TFT vs GenTFT + evo   | ε ∈ {0,0.01,0.05,0.10}, 100 seeds; evo ε=0.05 seed=42 | CTFT ranks 4th at ε=0 (exploitable by AllD); beats TFT at ε=0.01–0.05 only; evo: Random→AllDefect takeover |
 
 ---
 
@@ -282,3 +285,15 @@ src/content/devlog/           # 01, 02, 03 published posts (MDX)
 - **E-003**: 200-generation replicator dynamics. Bottom 4 extinct by gen 50.
   Cooperative equilibrium: TF2T≈GenTFT≈TFT>AllC>Pavlov>Grudger.
 - **Next session must start with**: Experiment 04 — noise sweep (ε from 0 to 0.15)
+
+### 2026-02-28
+- **E-004**: Noise sweep ε ∈ {0,0.01,0.02,0.05,0.10,0.15}, 100 seeds each. GenTFT
+  crossover at ε=0.01. Phase transition at ε≈0.10 — AllDefect and Grudger lead at
+  ε=0.15. Added noise param to game/tournament/stats/evolution engine (50 → 54 tests planned).
+- **E-005**: Implemented Contrite TFT. Theory was wrong: CTFT ranks 4th at ε=0
+  (exploited by AllDefect via C/D alternation, scoring 100 vs TFT's 199 against AllD).
+  CTFT beats TFT at ε=0.01–0.05 only. Never beats GenTFT. Evolutionary dynamics at
+  ε=0.05 show three-phase collapse: cooperation→Random (96% gen 100)→AllDefect (76%
+  gen 200). Added `noise` param to `runEvolution`. 54 tests. 11 strategies.
+- **Next session must start with**: Experiment 06 — CTFT in a cooperative field
+  (CTFT+TFT+GenTFT+TF2T+AllC+AllD, no Random/ZD). Does CTFT win in its intended env?

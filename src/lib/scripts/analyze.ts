@@ -8,11 +8,11 @@
 import { runRoundRobin } from "../engine/tournament.js";
 import { runMany } from "../engine/stats.js";
 import { runEvolution } from "../engine/evolution.js";
-import { allStrategies } from "../strategies/index.js";
+import { allStrategies, contriteTFT, titForTat, generousTFT, titForTwoTats } from "../strategies/index.js";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const MODE: "single" | "variance" | "evolution" | "noise-sweep" = "noise-sweep";
+const MODE: "single" | "variance" | "evolution" | "noise-sweep" | "ctft-comparison" | "ctft-evolution" = "ctft-evolution";
 
 const ROUNDS      = 200;
 const SEED        = 42;
@@ -176,5 +176,82 @@ if (MODE === "noise-sweep") {
     console.log(`  ε=${String(r.noise).padEnd(4)}  TFT rank=${tft.meanRank.toFixed(2)}  GenTFT rank=${gtft.meanRank.toFixed(2)}  Grudger rank=${grudger.meanRank.toFixed(2)}  Grudger score=${grudger.meanScore.toFixed(0)}`);
   }
 }
+
+// ─── CTFT noise comparison ────────────────────────────────────────────────────
+
+if (MODE === "ctft-comparison") {
+  const NOISE_LEVELS = [0, 0.01, 0.05, 0.10];
+  const SWEEP_RUNS   = 100;
+  const SWEEP_ROUNDS = 200;
+  const TARGET_NAMES = ["Contrite TFT", "Tit for Tat", "Generous TFT", "Tit for Two Tats"];
+
+  console.log(`\n═══ E-005: CTFT vs TFT vs GenTFT vs TF2T noise comparison`);
+  console.log(`    ε ∈ {${NOISE_LEVELS.join(", ")}}, ${SWEEP_RUNS} seeds, ${SWEEP_ROUNDS} rds/match ═══\n`);
+
+  const results = NOISE_LEVELS.map(ε => runMany(allStrategies, SWEEP_ROUNDS, SWEEP_RUNS, 0, ε));
+
+  console.log("Mean Score by noise level:\n");
+  console.log(L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join(""));
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+  for (const name of TARGET_NAMES) {
+    const row = L(name, 26) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanScore.toFixed(0), 9);
+    }).join("");
+    console.log(row);
+  }
+
+  console.log("\nMean Rank by noise level (lower = better):\n");
+  console.log(L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join(""));
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+
+  // Print all strategies sorted by ε=0 rank
+  const baseOrder = results[0].stats.map(s => s.name);
+  for (const name of baseOrder) {
+    const marker = TARGET_NAMES.includes(name) ? ">>> " : "    ";
+    const row = marker + L(name, 22) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanRank.toFixed(2), 9);
+    }).join("");
+    console.log(row);
+  }
+}
+
+// ─── CTFT evolutionary dynamics under noise ───────────────────────────────────
+
+if (MODE === "ctft-evolution") {
+  const NOISE_LEVEL = 0.05;
+  const EVO_ROUNDS  = 200;
+  const EVO_GENS    = 200;
+
+  console.log(`\n═══ E-005: Evolutionary dynamics with CTFT at ε=${NOISE_LEVEL}`);
+  console.log(`    ${EVO_GENS} generations, seed=${SEED}, ${EVO_ROUNDS} rds/match ═══\n`);
+
+  const result = runEvolution(allStrategies, EVO_ROUNDS, EVO_GENS, SEED, NOISE_LEVEL);
+
+  const checkpoints = [0, 1, 5, 10, 25, 50, 100, 200].filter(g => g <= EVO_GENS);
+  console.log(L("Strategy", 26) + checkpoints.map(g => R(`G${g}`, 8)).join(""));
+  console.log("─".repeat(26 + checkpoints.length * 8));
+
+  for (let i = 0; i < result.strategies.length; i++) {
+    const name = result.strategies[i];
+    const row = L(name, 26) + checkpoints.map(g => {
+      const snap = result.history[g];
+      return R((snap.shares[i] * 100).toFixed(1) + "%", 8);
+    }).join("");
+    console.log(row);
+  }
+
+  console.log("\nFinal shares (sorted):");
+  const final = result.strategies
+    .map((name, i) => ({ name, share: result.finalShares[i] }))
+    .sort((a, b) => b.share - a.share);
+  for (const { name, share } of final) {
+    const bar = "█".repeat(Math.round(share * 80));
+    console.log(`  ${name.padEnd(26)} ${pct(share).padStart(7)}  ${bar}`);
+  }
+}
+
+void contriteTFT; void titForTat; void generousTFT; void titForTwoTats;
 
 console.log();

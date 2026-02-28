@@ -1,0 +1,262 @@
+---
+title: "Experiment 05: Contrite TFT and the Limits of Theory"
+date: 2026-02-28
+description: "We implement Contrite TFT — the strategy theory says should dominate across all noise levels. It doesn't. CTFT is exploitable by defectors, ranks 4th even at ε=0, and only beats standard TFT in a narrow range. Evolutionary dynamics under noise reveal a three-phase collapse: cooperation rises, Random briefly dominates, then Always Defect takes over."
+tags: ["contrite-tft", "noise", "evolutionary-dynamics", "theory-vs-practice"]
+---
+
+import BarChart from "../../components/BarChart.astro";
+import { runMany } from "../../lib/engine/stats";
+import { runEvolution } from "../../lib/engine/evolution";
+import { allStrategies } from "../../lib/strategies/index";
+
+export const NOISE_LEVELS = [0, 0.01, 0.05, 0.10];
+export const results = NOISE_LEVELS.map(ε => runMany(allStrategies, 200, 100, 0, ε));
+export const baseOrder = results[0].stats.map(s => s.name);
+export const TARGET = ["Contrite TFT", "Tit for Tat", "Generous TFT", "Tit for Two Tats"];
+
+export const evoResult = runEvolution(allStrategies, 200, 200, 42, 0.05);
+export const evoFinal = [...evoResult.strategies.map((name, i) => ({
+  name, share: evoResult.finalShares[i]
+}))].sort((a, b) => b.share - a.share).filter(s => s.share > 0.001);
+
+## Research Question
+
+E-004 ended with a prediction from theory: *Contrite TFT* should outperform both
+standard TFT and Generous TFT across the full noise range. The mechanism is elegant —
+if a strategy apologises for its own defections (cooperates next round regardless of
+what the opponent did), it breaks the retaliation spirals that destroy TFT under noise
+without sacrificing the retaliation ability that GenTFT's 33% forgiveness rate
+weakens at high noise.
+
+**The experiment:** Implement CTFT, run it in the 11-strategy field across
+ε ∈ {0, 0.01, 0.05, 0.10}, and test evolutionary stability at ε=0.05.
+
+## Implementation
+
+Contrite TFT has a clean state-based definition:
+- **Round 1:** Cooperate.
+- **Round n>1:** If I defected last round (`mine[-1] === "D"`), cooperate — I am
+  *contrite* for my defection, regardless of intent. Otherwise: copy the opponent's
+  last move (standard TFT).
+
+The contrition check takes priority over retaliation. This means after any defection
+— noise-induced or deliberate retaliation — CTFT always cooperates next round to
+signal non-aggression and invite a return to mutual cooperation.
+
+```ts
+move: ({ mine, opponent }) => {
+  if (mine.length === 0) return "C";
+  if (mine[mine.length - 1] === "D") return "C"; // contrite
+  return opponent[opponent.length - 1];           // TFT
+},
+```
+
+## Results
+
+### Mean Rank by Noise Level (lower = better, 100 seeds, 200 rounds/match)
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      {NOISE_LEVELS.map(ε => <th key={ε}>ε={ε}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {baseOrder.map(name => (
+      <tr key={name} style={TARGET.includes(name) ? "font-weight:bold" : ""}>
+        <td>{name}</td>
+        {results.map((r, ri) => {
+          const s = r.stats.find(s => s.name === name);
+          const isTop = s.meanRank <= 2.5;
+          const isBot = s.meanRank >= 8;
+          return (
+            <td key={ri} style={`color: ${isTop ? "var(--green)" : isBot ? "var(--red)" : "var(--text)"}`}>
+              {s.meanRank.toFixed(2)}
+            </td>
+          );
+        })}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+### Focus: The TFT Family
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      {NOISE_LEVELS.map(ε => <th key={ε}>ε={ε}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {TARGET.map(name => {
+      const row = results.map((r, ri) => {
+        const s = r.stats.find(s => s.name === name);
+        const isTop = s.meanRank <= 2.5;
+        return (
+          <td key={ri} style={`color: ${isTop ? "var(--green)" : "var(--text)"}`}>
+            {s.meanRank.toFixed(2)}
+          </td>
+        );
+      });
+      return (
+        <tr key={name}>
+          <td><strong>{name}</strong></td>
+          {row}
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+## Analysis
+
+### 1. CTFT ranks 4th at ε=0 — worse than standard TFT
+
+The prediction was that CTFT would dominate. Instead, it ranks **4th** in a clean
+tournament (rank 4.02), behind TF2T (1.04), GenTFT (2.43), and TFT (2.53). This
+requires an explanation.
+
+The problem is **contrition is exploitable.** Consider CTFT vs Always Defect over
+200 rounds:
+
+- Round 1: CTFT=C, AllD=D → CTFT scores 0
+- Round 2: CTFT sees D, retaliates → D. AllD=D. CTFT scores 1.
+- Round 3: CTFT defected last round → **contrite** → C. AllD=D. CTFT scores 0.
+- Round 4: CTFT retaliates → D. Scores 1.
+- Round 5: Contrite → C. Scores 0.
+- ...
+
+CTFT is trapped in a permanent C/D alternation against AllDefect, scoring 100
+over 200 rounds. TFT locks into mutual defection (DD) after round 1 and scores 199.
+CTFT scores *half* what TFT scores against an unconditional defector.
+
+The same vulnerability applies against ZD Extorter. ZD's defection probability from
+a CD state is 0 — it always defects when cooperating against a defector. When CTFT
+apologises (C) after retaliating, ZD exploits every apology. CTFT's contrition
+converts into a series of sucker payoffs (0) that TFT avoids by staying in DD.
+
+**The theoretical prediction assumed a cooperative population.** Contrite TFT was
+designed for environments where both players intend to cooperate and noise causes
+accidental betrayals. In Axelrod-style mixed tournaments with dedicated defectors,
+CTFT's apology mechanism is a systematic liability.
+
+### 2. CTFT does beat TFT in medium noise — but not GenTFT
+
+Despite its penalty against defectors, CTFT recovers some ground as noise increases:
+
+| ε | CTFT rank | TFT rank | Δ (CTFT advantage) |
+|---|---|---|---|
+| 0    | 4.02 | 2.53 | TFT better by 1.49 |
+| 0.01 | 4.31 | **5.00** | CTFT better by 0.69 |
+| 0.05 | 4.64 | **5.49** | CTFT better by 0.85 |
+| 0.10 | 6.51 | 5.52 | TFT better by 0.99 |
+
+At ε=0.01–0.05, CTFT outranks TFT. The contrition mechanism does break
+retaliation spirals between CTFT and other cooperative strategies, preventing
+the echo-retaliation chains that collapse TFT's score under noise.
+
+But CTFT **never** outranks Generous TFT across any tested noise level. GenTFT's
+forgiveness of ~33% of defections provides a similar spiral-breaking mechanism
+without incurring the exploitability cost — it forgives the *opponent's* defections
+rather than apologising for its own. Against AllDefect, GenTFT retaliates 67% of
+the time and still maintains threat credibility; CTFT cooperates unconditionally
+after every retaliation.
+
+### 3. Evolutionary dynamics at ε=0.05: a three-phase collapse
+
+The evolutionary run produces the most striking finding of this experiment.
+
+<BarChart
+  labels={evoFinal.map(s => s.name)}
+  values={evoFinal.map(s => parseFloat((s.share * 100).toFixed(1)))}
+  height="240px"
+/>
+
+The final equilibrium at ε=0.05 after 200 generations: **Always Defect (76%) and
+Grudger (24%)**. Every cooperative strategy, including CTFT, has gone extinct.
+
+This is a complete inversion of the ε=0 equilibrium (E-003), where defectors went
+extinct by generation 50. The dynamics have three phases:
+
+**Phase 1 (gen 0–50):** Cooperative strategies rise. TF2T, GenTFT, and TFT gain
+population share as they did at ε=0. Defectors (AllDefect, Grudger) decline. The
+early dynamics are similar to the clean case.
+
+**Phase 2 (gen 50–100):** Random rises to dominance (96.3% at generation 100).
+This is counterintuitive. The mechanism: once the cooperative strategies dominate
+and the dedicated defectors are suppressed, Random — which cooperates ~50% of the
+time — earns a reasonable payoff against the cooperative population while contributing
+none of the cooperation-sustaining retaliation. With added noise (ε=0.05), every
+strategy occasionally looks like Random anyway, compressing the payoff differences
+between cooperative and stochastic strategies. Random emerges as a parasitic
+"cooperator" that benefits from others' cooperation without the cost of retaliation.
+
+**Phase 3 (gen 100–200):** Random's dominance is its own undoing. In a
+Random-dominated field, each strategy's payoff against Random is approximately:
+*score(S vs Random) ≈ 0.5 × payoff(SC) + 0.5 × payoff(SD)*. Always Defect's
+payoff against Random = 0.5×5 + 0.5×1 = 3.0 per round — *higher than the
+Random vs Random average* (~2.25/round). Tiny residual AllDefect population
+share begins growing again. Once AllDefect rises, it suppresses Random and takes
+over. Grudger follows because at medium-to-high noise, Grudger approximates
+AllDefect (it locks in after the first noise event, which arrives quickly at ε=0.05).
+
+**The cooperative equilibrium is evolutionarily fragile under noise.** At ε=0, the
+equilibrium is stable because defectors cannot invade a cooperative population —
+TFT and TF2T punish them reliably. At ε=0.05, retaliation is noisy enough that
+the punishment signal is diluted, Random parasitism can emerge, and once Random
+takes hold, genuine defectors can exploit the Random-dominated pool.
+
+### 4. Summary: Theory was right about the mechanism, wrong about the magnitude
+
+Contrite TFT does what theory predicts: it breaks noise-triggered retaliation
+spirals between cooperative strategies, and it does beat standard TFT in the
+ε=0.01–0.05 range. The mechanism is correct.
+
+But theory overstated the practical advantage because it assumed:
+1. CTFT plays in a **population of cooperative strategies** — not against ZD
+   extorters and always-defectors
+2. The **evolutionary equilibrium is stable** at medium noise — it is not;
+   defectors re-invade through a Random-mediated route
+
+The real lesson from E-005 is about the gap between theoretical models (which study
+strategy pairs) and empirical tournaments (which test strategy robustness across
+a diverse field). A strategy can be theoretically optimal in its intended environment
+and still fail in the wild.
+
+## Conclusions
+
+1. **CTFT is exploitable.** Against unconditional defectors, its contrition mechanism
+   creates permanent alternating C-D cycles that score half what TFT earns through
+   mutual DD. This penalty costs CTFT 1.5 ranks in clean tournaments.
+
+2. **CTFT beats TFT at ε=0.01–0.05 only.** The contrition advantage is real but
+   narrow. At ε=0 and ε=0.10, TFT outranks CTFT. GenTFT outranks CTFT at all
+   tested noise levels.
+
+3. **No strategy we've tested spans the full noise range.** GenTFT leads at ε≤0.05;
+   defectors lead at ε≥0.10. The gap at ε≈0.05–0.10 remains unclaimed.
+
+4. **Evolutionary dynamics under noise produce a defector equilibrium.** At ε=0.05,
+   the cooperative equilibrium from E-003 does not emerge. Instead: cooperation →
+   Random parasitism → defector invasion → stable defector equilibrium. The phase
+   transition observed in round-robin (E-004) has an evolutionary counterpart.
+
+5. **The three-phase evolutionary dynamic is new.** The Random-mediated route to
+   defection dominance was not predicted and has not appeared in prior experiments.
+   It warrants further study.
+
+## Next Steps
+
+Two high-priority threads emerge:
+
+- **Contrite TFT in a homogeneous field.** Theory predicts CTFT dominates when
+  playing other CTFTs. What is the evolutionary outcome of a CTFT+TFT+GenTFT+AllD
+  tournament, without Random and ZD? Does CTFT win in its intended environment?
+
+- **The ε=0.05 evolutionary dynamics.** The Random-mediated defector invasion is
+  a novel finding. Is it robust across seeds? Does it appear at ε=0.02? Can any
+  cooperative strategy prevent Random from rising in a noisy cooperative field?

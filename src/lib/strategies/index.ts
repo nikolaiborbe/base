@@ -86,6 +86,19 @@ export const generousTFT: Strategy = {
   },
 };
 
+export const contriteTFT: Strategy = {
+  name: "Contrite TFT",
+  description:
+    "Like TFT but atones for its own defections: if it defected last round (regardless of intent), it cooperates unconditionally next round. This breaks retaliation spirals caused by noise.",
+  move: ({ mine, opponent }) => {
+    if (mine.length === 0) return "C";
+    // Contrite: if I defected last round, cooperate to apologise
+    if (mine[mine.length - 1] === "D") return "C";
+    // Otherwise: standard TFT — copy opponent's last move
+    return opponent[opponent.length - 1];
+  },
+};
+
 // ─── Zero-Determinant strategies (Press & Dyson 2012) ───────────────────────
 
 /**
@@ -119,6 +132,7 @@ export const allStrategies: Strategy[] = [
   grudger,
   pavlov,
   generousTFT,
+  contriteTFT,
   allCooperate,
   allDefect,
   suspiciousTFT,

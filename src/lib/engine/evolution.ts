@@ -17,6 +17,7 @@ export interface EvolutionResult {
   rounds: number;
   generations: number;
   seed: number;
+  noise: number;
 }
 
 /**
@@ -47,13 +48,14 @@ export function runEvolution(
   rounds: number,
   generations: number,
   seed: number,
+  noise = 0,
 ): EvolutionResult {
   const n = strategies.length;
 
   // ── Step 1: Build pairwise payoff matrix once ──────────────────────────────
   // avgPayoff[i][j] = average score per round that strategy i earns against j.
   // We run a full round-robin; all pairwise game results are available.
-  const tournament = runRoundRobin(strategies, rounds, seed);
+  const tournament = runRoundRobin(strategies, rounds, seed, noise);
 
   // Build a lookup: strategyName → row index
   const idx = new Map<string, number>(strategies.map((s, i) => [s.name, i]));
@@ -105,5 +107,6 @@ export function runEvolution(
     rounds,
     generations,
     seed,
+    noise,
   };
 }

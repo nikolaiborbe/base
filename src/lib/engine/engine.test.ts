@@ -13,6 +13,7 @@ import {
   pavlov,
   suspiciousTFT,
   generousTFT,
+  contriteTFT,
   zdExtorter,
   random,
   allStrategies,
@@ -447,5 +448,41 @@ describe("noise effects (E-004)", () => {
   it("noise TournamentResult carries the noise value", () => {
     const r = runRoundRobin(allStrategies, 50, 42, 0.05);
     expect(r.noise).toBe(0.05);
+  });
+});
+
+// ─── Contrite TFT (E-005) ─────────────────────────────────────────────────────
+
+describe("ContriteTFT", () => {
+  it("cooperates on round 1", () => {
+    const r = playGame(contriteTFT, allDefect, 1);
+    expect(r.rounds[0].moveA).toBe("C");
+  });
+
+  it("cooperates after its own defection (contrition)", () => {
+    // Round 1: CTFT=C, AllDefect=D → CTFT gets suckered, mine[-1]=C → retaliates round 2
+    // Round 2: CTFT=D, AllDefect=D → mine[-1]=D → CTFT is contrite, cooperates round 3
+    const r = playGame(contriteTFT, allDefect, 3);
+    expect(r.rounds[0].moveA).toBe("C"); // round 1: first move
+    expect(r.rounds[1].moveA).toBe("D"); // round 2: retaliate
+    expect(r.rounds[2].moveA).toBe("C"); // round 3: contrite after own D
+  });
+
+  it("sustains mutual cooperation against itself (no noise)", () => {
+    const r = playGame(contriteTFT, contriteTFT, 50);
+    expect(r.coopRateA).toBe(1);
+    expect(r.coopRateB).toBe(1);
+    expect(r.totalA).toBe(150); // 3 × 50
+  });
+
+  it("CTFT pair sustains more cooperation than TFT pair under noise — E-005 finding", () => {
+    // CTFT breaks retaliation spirals: when both partners are contrite, a noise event
+    // resolves in 1-2 rounds. TFT vs TFT spirals into mutual defection.
+    // Test: CTFT+CTFT joint score > TFT+TFT joint score (same seed, same noise).
+    const ctftVsCtft = playGame(contriteTFT, contriteTFT, 200, mulberry32(42), 0.05);
+    const tftVsTft   = playGame(titForTat,   titForTat,   200, mulberry32(42), 0.05);
+    const ctftJoint = ctftVsCtft.totalA + ctftVsCtft.totalB;
+    const tftJoint  = tftVsTft.totalA   + tftVsTft.totalB;
+    expect(ctftJoint).toBeGreaterThan(tftJoint);
   });
 });
