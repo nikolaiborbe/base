@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (8 posts, 8 experiments)
+### What has been established (9 posts, 9 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -132,36 +132,64 @@ Noise fractures the cooperative equilibrium into multiple stable attractors:
 
 62 tests (was 59). 3 new E-008 regression tests.
 
+**E-009 — Pavlov fixation stability** (invasion from 90% Pavlov, 200 gens, all invaders, ε ∈ {0, 0.01, 0.02, 0.05}):
+
+Added `initialShares` parameter to `runEvolution`. Tested each strategy as an invader
+starting from 90% Pavlov, 0.91% all others.
+
+1. **ε=0: Pavlov is a true ESS.** No strategy grows meaningfully. Pavlov holds at 93%.
+   Exploitative strategies (ZD, SusTFT, Random) collapse. Cooperative strategies stay
+   near 1%. Pavlov is completely uninvadable at zero noise.
+
+2. **ε=0.01: TFT partially invades (5.94%), TF2T collapses (0%).** TFT earns
+   2.985/round vs Pavlov (above Pavlov's 2.925 vs itself) → fitness advantage → growth.
+   TF2T earns only 1.870/round vs Pavlov → collapse. The paradox: TF2T wins round-robin
+   at ε=0.01 but cannot invade Pavlov because its 2-defection threshold lets Pavlov
+   Win-Stay for multiple exploitation rounds before TF2T retaliates.
+
+3. **ε=0.02: Grudger completely displaces Pavlov (0.91% → 99.9%).** Mechanism: noise
+   triggers Grudger's permanent-defection response. Once triggered, Grudger earns
+   ~3.0/round vs Pavlov, Pavlov earns ~0.63/round vs Grudger. Pavlov extinct by gen
+   100. The noise threshold for permanent grudge trigger ≈ 1/ε = 50 rounds, well within
+   200-round horizon.
+
+4. **ε=0.05: Grudger (64%) + AllDefect (35%) jointly displace Pavlov.**
+
+The Pavlov→Grudger threshold lies between ε=0.01 and ε=0.02.
+
+65 tests (was 62). 3 new E-009 regression tests.
+
 ### The open scientific thread
 
-Eight experiments in. The core questions now are:
+Nine experiments in. The core questions now are:
 
-> **What determines Pavlov's basin of attraction?** Pavlov wins evolutionarily
-> despite mediocre round-robin scores. E-009 should test fixation stability directly:
-> starting from a Pavlov-dominated population, which strategies can invade, and at
-> what noise level?
+> **Where is the Pavlov→Grudger threshold precisely?** E-009 places it between
+> ε=0.01 and ε=0.02. A fine-grained sweep can locate the critical noise level where
+> Grudger's invasion probability crosses 50%.
 
-> **Is the multistability a function of the mean-field approximation?** The replicator
-> dynamics use a single payoff matrix per run. Real populations have ongoing payoff
-> variance. Does the multistability persist under richer population dynamics?
+> **Is multistability (E-008) explained by basin boundaries around the Pavlov ESS?**
+> E-009 shows Pavlov is stable at ε=0. The Grudger threshold at ε≈0.01-0.02 maps to
+> the breakdown of Pavlov's basin. Does locating the threshold explain which seeds in
+> E-008 land in Pavlov's vs TF2T's basin?
 
 ---
 
-## Immediate Next Task — Experiment 09: Pavlov's Fixation Stability
+## Immediate Next Task — Experiment 10: The Grudger Threshold
 
-**Research question:** Pavlov wins evolutionarily in many seeds despite low round-robin
-rank. The mechanism is fixation stability (hard to invade when common). Which strategies
-can actually invade a Pavlov-dominated population, and at what noise level?
+**Research question:** At what noise level ε\* does Grudger first successfully invade
+a Pavlov-dominated population? (E-009 places ε\* between 0.01 and 0.02.)
 
 **Plan:**
-1. For each invader in `allStrategies`, run evolution starting from a population
-   that is 90% Pavlov + 10% invader (use equal initial shares otherwise)
-2. Track whether the invader grows or shrinks over 200 generations
-3. Measure invasion success rate across ε ∈ {0, 0.01, 0.02, 0.05}
-4. Write devlog post 09
+1. Sweep ε ∈ {0.010, 0.012, 0.014, 0.016, 0.018, 0.020} with the same 90% Pavlov
+   invasion setup from E-009
+2. For each ε, run 20 seeds and count how many times Grudger's final share > 10%
+3. Find the critical ε where the invasion probability crosses 50%
+4. Write devlog post 10
 
-**Implementation note:** `runEvolution` currently starts from equal shares. To test
-invasion, either modify initial shares or use a custom wrapper.
+**Expected outcome:** The critical threshold ε\* is where 1/ε (expected rounds to
+first noise event) approaches the game length (200 rounds). At ε=0.01, E[first event]
+= 100 rounds — some games are short enough to avoid it. At ε=0.02, E = 50 rounds —
+almost all 200-round games include at least one event.
 
 ---
 
@@ -231,6 +259,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-006 | 2026-02-28 | CTFT in cooperative field; ε=0.02 evo  | coop field 100 seeds; evo ε ∈ {0,0.01,0.05,0.02} seed=42 | CTFT 4th in coop field; GenTFT sweeps evo at ε=0.01 (48%) and ε=0.05 (91%); ε=0.02 full-field: GenTFT 94%, no invasion; phase transition between ε=0.02–0.05 |
 | E-007 | 2026-02-28 | Gradual noise sweep + forgiveness rate sweep | 12-strategy, 100 seeds, ε ∈ {0,0.01,0.02,0.05,0.10}; forg sweep 80 seeds | Gradual rank 1st at ε=0, collapses to ~8th at ε=0.05; self-play coop 100%→26%; p*=0.20 (not canonical 0.33); TF2T most noise-robust cooperative strategy |
 | E-008 | 2026-02-28 | Evolutionary multistability under noise | 40 seeds × 4 noise levels, 200 gens, 12 strategies | TF2T round-robin lead ≠ evolutionary dominance; 6 distinct attractors at ε=0.01; Pavlov wins 25–35% of seeds under noise despite low round-robin rank |
+| E-009 | 2026-02-28 | Pavlov fixation stability + invasion test | 90% Pavlov start, all invaders, ε ∈ {0,0.01,0.02,0.05} | Pavlov ESS at ε=0; TFT invades at ε=0.01 (5.94%), TF2T collapses; Grudger completely displaces Pavlov at ε=0.02 via noise-triggered permanent defection |
 
 ---
 
@@ -314,7 +343,7 @@ src/lib/engine/
   tournament.ts   # runRoundRobin()
   stats.ts        # runMany()
   evolution.ts    # runEvolution()
-  engine.test.ts  # 62 tests — npm test
+  engine.test.ts  # 65 tests — npm test
 
 src/lib/strategies/index.ts   # all 12 strategies + allStrategies[] + makeGenTFT(p)
 src/lib/scripts/analyze.ts    # CLI runner — set MODE and npm run analyze
@@ -368,5 +397,10 @@ src/content/devlog/           # 01, 02, 03 published posts (MDX)
   winners across 40 seeds; Pavlov wins 25% despite ranking 5th in round-robin. Pavlov's
   Win-Stay/Lose-Shift recovers cooperation in 1 round after symmetric noise events;
   its fixation stability makes it a major evolutionary attractor. 62 tests.
-- **Next session must start with**: Experiment 09 — Pavlov fixation stability. Which
-  strategies can invade a Pavlov-dominated population, and at what noise level?
+- **E-009**: Pavlov is ESS at ε=0 (uninvadable). At ε=0.01: TFT grows to 5.94%,
+  TF2T collapses (earns only 1.87/round vs Pavlov — leniency paradox). At ε=0.02:
+  Grudger completely displaces Pavlov (noise triggers permanent defection; Grudger
+  earns 3.0/round vs Pavlov's 0.63). Added `initialShares` param to `runEvolution`.
+  65 tests.
+- **Next session must start with**: Experiment 10 — Grudger threshold sweep.
+  Fine-grained ε sweep between 0.01–0.02 to locate the exact invasion threshold.

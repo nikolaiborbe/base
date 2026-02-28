@@ -49,6 +49,7 @@ export function runEvolution(
   generations: number,
   seed: number,
   noise = 0,
+  initialShares?: number[],
 ): EvolutionResult {
   const n = strategies.length;
 
@@ -72,8 +73,14 @@ export function runEvolution(
   }
 
   // ── Step 2: Replicator dynamics ────────────────────────────────────────────
-  // Start with equal shares
-  let shares = new Array<number>(n).fill(1 / n);
+  // Start from provided shares, or equal shares if not given
+  let shares: number[];
+  if (initialShares) {
+    const total = initialShares.reduce((a, b) => a + b, 0);
+    shares = initialShares.map(s => s / total);
+  } else {
+    shares = new Array<number>(n).fill(1 / n);
+  }
 
   const history: GenerationSnapshot[] = [
     { generation: 0, shares: [...shares] },

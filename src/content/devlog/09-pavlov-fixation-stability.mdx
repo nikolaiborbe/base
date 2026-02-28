@@ -1,0 +1,337 @@
+---
+title: "Experiment 09: Pavlov's Fixation Stability and the Grudger Threshold"
+date: 2026-02-28
+description: "E-008 showed Pavlov wins 25–35% of evolutionary trajectories under noise despite ranking 4th–7th in round-robin. Here we test fixation stability directly: starting from a 90% Pavlov population, which strategies can invade, and at what noise level? At ε=0 Pavlov is completely uninvadable. At ε=0.01, only TFT gains a stable foothold (~6%). At ε=0.02, Grudger completely displaces Pavlov via a noise-triggered permanent-defection cascade. The mechanism explains the E-008 multistability: Pavlov and Grudger-dominated populations are alternative stable states whose basins of attraction depend on initial conditions."
+tags: ["pavlov", "invasion", "grudger", "fixation-stability", "evolutionary-dynamics"]
+---
+
+import { runEvolution } from "../../lib/engine/evolution";
+import { runRoundRobin } from "../../lib/engine/tournament";
+import { allStrategies } from "../../lib/strategies/index";
+
+export const NOISE_LEVELS = [0, 0.01, 0.02, 0.05];
+export const n = allStrategies.length;
+export const pavlovIdx = allStrategies.findIndex(s => s.name === "Pavlov");
+export const baseShare = 0.10 / (n - 1);
+
+export const initShares = allStrategies.map((_, i) => i === pavlovIdx ? 0.90 : baseShare);
+
+export const invasionData = NOISE_LEVELS.map(eps => {
+  const evo = runEvolution(allStrategies, 200, 200, 42, eps, initShares);
+  return {
+    eps,
+    results: allStrategies
+      .filter(s => s.name !== "Pavlov")
+      .map(s => {
+        const idx = allStrategies.findIndex(str => str.name === s.name);
+        return { name: s.name, final: evo.finalShares[idx] };
+      })
+      .sort((a, b) => b.final - a.final),
+    pavFinal: evo.finalShares[pavlovIdx],
+  };
+});
+
+export const grudgerTrajectory = (function() {
+  const grIdx  = allStrategies.findIndex(s => s.name === "Grudger");
+  const adIdx  = allStrategies.findIndex(s => s.name === "Always Defect");
+  const evo = runEvolution(allStrategies, 200, 200, 42, 0.02, initShares);
+  const GENS = [0, 5, 10, 20, 30, 50, 100, 200];
+  return GENS.map(g => ({
+    gen: g,
+    pavlov:  evo.history[g].shares[pavlovIdx] * 100,
+    grudger: evo.history[g].shares[grIdx] * 100,
+    allD:    evo.history[g].shares[adIdx] * 100,
+  }));
+})();
+
+export const payoffs01 = (function() {
+  const t = runRoundRobin(allStrategies, 200, 42, 0.01);
+  const pav  = t.entries.find(e => e.name === "Pavlov");
+  const tf2t = t.entries.find(e => e.name === "Tit for Two Tats");
+  const tft  = t.entries.find(e => e.name === "Tit for Tat");
+  return {
+    pavVsPav:  pav.matches.find(m => m.opponent === "Pavlov").score / 200,
+    tf2tVsPav: tf2t.matches.find(m => m.opponent === "Pavlov").score / 200,
+    tftVsPav:  tft.matches.find(m => m.opponent === "Pavlov").score / 200,
+    pavVsTf2t: pav.matches.find(m => m.opponent === "Tit for Two Tats").score / 200,
+    pavVsTft:  pav.matches.find(m => m.opponent === "Tit for Tat").score / 200,
+  };
+})();
+
+export const payoffs02 = (function() {
+  const t = runRoundRobin(allStrategies, 200, 42, 0.02);
+  const pav     = t.entries.find(e => e.name === "Pavlov");
+  const grudger = t.entries.find(e => e.name === "Grudger");
+  return {
+    pavVsPav:      pav.matches.find(m => m.opponent === "Pavlov").score / 200,
+    pavVsGrudger:  pav.matches.find(m => m.opponent === "Grudger").score / 200,
+    grudgerVsPav:  grudger.matches.find(m => m.opponent === "Pavlov").score / 200,
+    grudgerVsGrud: grudger.matches.find(m => m.opponent === "Grudger").score / 200,
+  };
+})();
+
+## Research Question
+
+E-008 revealed Pavlov as a major evolutionary attractor under noise (winning 25–35%
+of trajectories) despite ranking 4th–7th in round-robin. The proposed mechanism was
+**fixation stability**: a Pavlov-dominated population is hard to invade. We test this
+directly.
+
+> **Which strategies can invade a 90% Pavlov population, and at what noise level?
+> And why do some strategies that outperform Pavlov in round-robin fail to invade?**
+
+---
+
+## Setup
+
+For each invader strategy, we start from initial population shares of **90% Pavlov**
+and **0.91% each for all other 11 strategies**, then run 200 generations of replicator
+dynamics. An "invasion" is declared if a strategy's final share substantially exceeds
+its initial 0.91% starting share.
+
+Payoff matrix: single round-robin at seed 42 (same seed for all noise levels).
+
+---
+
+## Experiment A: Invasion Results
+
+### Invader final shares (gen 200) starting from 90% Pavlov
+
+<table>
+  <thead>
+    <tr>
+      <th>Invader</th>
+      {NOISE_LEVELS.map(eps => <th key={eps}>ε={eps}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {allStrategies.filter(s => s.name !== "Pavlov").map(s => {
+      const row = invasionData.map(d => d.results.find(r => r.name === s.name).final * 100);
+      const anyInvades = row.some(v => v > 1.5);
+      return (
+        <tr key={s.name}>
+          <td><strong>{s.name}</strong></td>
+          {row.map((pct, i) => (
+            <td key={i} style={`color: ${pct > 10 ? "var(--green)" : pct < 0.5 ? "var(--muted)" : "var(--text)"}; font-weight: ${pct > 50 ? "bold" : "normal"}`}>
+              {pct > 0.05 ? pct.toFixed(1) + "%" : "—"}
+            </td>
+          ))}
+        </tr>
+      );
+    })}
+    <tr style="border-top: 1px solid var(--border); font-style: italic">
+      <td>Pavlov (resident)</td>
+      {invasionData.map(d => (
+        <td key={d.eps} style={`color: ${d.pavFinal > 0.5 ? "var(--green)" : "var(--red)"}`}>
+          {(d.pavFinal * 100).toFixed(1)}%
+        </td>
+      ))}
+    </tr>
+  </tbody>
+</table>
+
+### Finding A1: At ε=0, Pavlov is completely uninvadable
+
+No strategy gains meaningful share in a 90% Pavlov population at zero noise. All
+cooperative strategies remain within a fraction of a percent of their starting share;
+exploitative strategies (ZD Extorter, Suspicious TFT, Random) collapse to near-zero.
+Pavlov holds at 93%.
+
+This confirms Pavlov is a true **Evolutionarily Stable Strategy** (ESS) in the
+deterministic IPD: once it dominates, no invading strategy earns higher payoff against
+the incumbent Pavlov population.
+
+### Finding A2: At ε=0.01, only TFT can grow — and only partially
+
+At low noise, TFT grows from 0.91% to **5.94%** and stabilises there. Grudger also
+grows slightly (to 1.61%). All other strategies shrink. Pavlov holds at 92%.
+
+TFT carves a stable niche but cannot displace Pavlov. This is **partial invasion**: TFT
+and Pavlov reach a mixed equilibrium where TFT's fitness advantage from retaliation
+speed is balanced by Pavlov's dominant presence.
+
+### Finding A3: At ε=0.02, Grudger completely displaces Pavlov
+
+Grudger invades from 0.91% and reaches **99.9%** by generation 200, while Pavlov
+collapses to 0.0%. This is total, irreversible invasion — not a mixed equilibrium.
+
+### Finding A4: At ε=0.05, both Grudger and Always Defect invade
+
+At high noise, Grudger again displaces Pavlov (64%) but Always Defect also grows (35%).
+Pavlov collapses completely. The population ends in a mixed defection equilibrium.
+
+---
+
+## Experiment B: The Grudger Invasion Mechanism
+
+Why does Grudger so decisively defeat Pavlov at ε=0.02?
+
+### Pairwise payoffs at ε=0.02 (average per round)
+
+<table>
+  <thead>
+    <tr><th>Matchup</th><th>Pavlov earns</th><th>Grudger earns</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>vs each other</td>
+      <td>{payoffs02.pavVsPav.toFixed(3)}</td>
+      <td>{payoffs02.grudgerVsGrud.toFixed(3)}</td>
+    </tr>
+    <tr>
+      <td>Pavlov vs Grudger</td>
+      <td style="color: var(--red)">{payoffs02.pavVsGrudger.toFixed(3)}</td>
+      <td style="color: var(--green)">{payoffs02.grudgerVsPav.toFixed(3)}</td>
+    </tr>
+  </tbody>
+</table>
+
+The asymmetry is decisive: Grudger earns **{payoffs02.grudgerVsPav.toFixed(2)}/round**
+against Pavlov; Pavlov earns only **{payoffs02.pavVsGrudger.toFixed(2)}/round** against
+Grudger. In a 90% Pavlov population, Grudger's fitness is dominated by this matchup
+and substantially exceeds Pavlov's own fitness — so Grudger grows.
+
+**The mechanism:** At ε=0.02, each move has a 2% chance of being flipped.
+Expected rounds before a noise-triggered apparent defection ≈ 1/0.02 = 50.
+When noise causes Pavlov to appear to defect against Grudger:
+
+1. Grudger switches to **permanent AllD** (it never forgives)
+2. Pavlov, using Win-Stay/Lose-Shift, then oscillates: C→D(lose→shift)→C→D...
+3. Grudger gets ≈ (T+P)/2 = 3.0/round; Pavlov gets ≈ (S+P)/2 = 0.5/round
+
+Once triggered (which is almost certain over 200 rounds), every remaining round
+is a lopsided exchange in Grudger's favour. This is not a close fitness contest —
+it is exploitation.
+
+### Grudger invasion trajectory (ε=0.02, seed 42)
+
+<table>
+  <thead>
+    <tr><th>Generation</th><th>Pavlov</th><th>Grudger</th><th>Always Defect</th></tr>
+  </thead>
+  <tbody>
+    {grudgerTrajectory.map(row => (
+      <tr key={row.gen}>
+        <td><strong>G{row.gen}</strong></td>
+        <td style={`color: ${row.pavlov > 50 ? "var(--green)" : row.pavlov < 5 ? "var(--muted)" : "var(--text)"}`}>
+          {row.pavlov.toFixed(1)}%
+        </td>
+        <td style={`color: ${row.grudger > 50 ? "var(--green)" : "var(--text)"}`}>
+          {row.grudger.toFixed(1)}%
+        </td>
+        <td style="color: var(--muted)">{row.allD.toFixed(1)}%</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+Grudger's initial growth is slow (0.9% → 1.6% in 10 generations) as the fitness
+advantage accumulates. By generation 30 Grudger has 5% and Pavlov's collapse
+accelerates. By generation 100 Pavlov is gone and Grudger holds 96%.
+
+---
+
+## Experiment C: Why TF2T Cannot Invade — The Leniency Paradox
+
+TF2T wins the round-robin at ε=0.01 (rank 2.10, best cooperative strategy). Yet in
+the invasion test it collapses from 0.91% to **0.0%**. TFT, which ranks 5th at ε=0.01
+(rank 5.36), grows to 5.94%. This is a direct contradiction of the prediction that
+round-robin performance translates to evolutionary fitness.
+
+### Payoffs vs Pavlov at ε=0.01 (average per round)
+
+<table>
+  <thead>
+    <tr><th>Strategy</th><th>Score vs Pavlov</th><th>Pavlov's score vs them</th><th>Invasion outcome</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Pavlov (self)</td>
+      <td>{payoffs01.pavVsPav.toFixed(3)}</td>
+      <td>—</td>
+      <td style="color: var(--muted)">resident</td>
+    </tr>
+    <tr>
+      <td><strong>Tit for Tat</strong></td>
+      <td style="color: var(--green)">{payoffs01.tftVsPav.toFixed(3)}</td>
+      <td>{payoffs01.pavVsTft.toFixed(3)}</td>
+      <td style="color: var(--green)">grows to ~6%</td>
+    </tr>
+    <tr>
+      <td><strong>Tit for Two Tats</strong></td>
+      <td style="color: var(--red)">{payoffs01.tf2tVsPav.toFixed(3)}</td>
+      <td>{payoffs01.pavVsTf2t.toFixed(3)}</td>
+      <td style="color: var(--red)">collapses to 0%</td>
+    </tr>
+  </tbody>
+</table>
+
+TFT earns **{payoffs01.tftVsPav.toFixed(3)}/round** against Pavlov — *above* Pavlov vs
+Pavlov ({payoffs01.pavVsPav.toFixed(3)}). TFT therefore has higher fitness than Pavlov
+in a Pavlov-dominated field, and grows.
+
+TF2T earns only **{payoffs01.tf2tVsPav.toFixed(3)}/round** against Pavlov — *well below*
+Pavlov vs Pavlov. TF2T has lower fitness than Pavlov in a Pavlov-dominated field, and
+goes extinct.
+
+**Why does TF2T score so poorly against Pavlov?** TF2T's defining rule is requiring
+*two consecutive* defections before retaliating. When noise causes Pavlov to appear
+to defect, Pavlov Win-Stays (T=5 is a win, so it stays in D). TF2T cooperates through
+the first defection. Pavlov defects again. TF2T cooperates again (still only one
+defection in a row). Pavlov sees T=5 and Win-Stays a third time. Only when TF2T finally
+sees two consecutive Ds does it retaliate — by which point Pavlov has collected T=5
+for multiple rounds while TF2T received S=0.
+
+TFT, retaliating after *one* defection, immediately responds: Pavlov then gets P=1
+(lose → shifts to C) and the noise event resolves in a single round.
+
+**The leniency paradox:** TF2T's tolerance for single noise events — the property
+that makes it the most robust cooperative strategy in a *diverse* round-robin field
+— makes it exploitable by Pavlov's WSLS rule in a *homogeneous* Pavlov field.
+The same feature that helps TF2T win broadly is the feature that prevents it from
+invading the Pavlov equilibrium.
+
+---
+
+## Connecting E-008 and E-009
+
+E-008 found that Pavlov and TF2T are alternative attractors in the equal-start
+evolutionary dynamics at ε=0. Now we understand why both exist:
+
+- **Pavlov's basin:** Once Pavlov dominates, TF2T cannot invade (TF2T earns 1.87 vs
+  Pavlov, far below Pavlov's 2.93 vs itself). The basin is large and deep.
+- **TF2T's basin:** When TF2T is already dominant, it maintains a cooperative
+  equilibrium because TF2T vs TF2T works well. Whether you reach Pavlov's or TF2T's
+  basin depends on which strategy gains early fitness advantage from the random payoff
+  matrix fluctuations in E-008's diverse starting population.
+- **Grudger as the destabiliser:** Grudger cannot invade either basin stably at ε=0
+  (Grudger vs Grudger is fragile under noise). But at ε≥0.02, Grudger's permanent-
+  defection response to noise-triggered apparent defections gives it a decisive fitness
+  advantage against Pavlov specifically, breaking the Pavlov basin entirely.
+
+---
+
+## Summary
+
+Pavlov is a genuine ESS at ε=0 — completely uninvadable by any strategy in our field.
+Noise introduces a noise-dependent stability boundary:
+
+| ε | Pavlov stability | Primary threat | Mechanism |
+|---|---|---|---|
+| 0 | Fully stable (ESS) | None | No invader earns more than Pavlov vs Pavlov |
+| 0.01 | Partially stable | TFT (~6% niche) | TFT's fast retaliation outperforms Pavlov vs Pavlov |
+| 0.02 | **Unstable** | Grudger (complete takeover) | Noise triggers permanent defection; Grudger earns 2.98 vs Pavlov's 0.63 |
+| 0.05 | **Unstable** | Grudger + AllDefect | Same mechanism, AllDefect also exploits the defection cascade |
+
+The Grudger threshold lies between ε=0.01 and ε=0.02 — the noise level at which
+noise events are frequent enough that the expected time to Grudger-triggering falls
+within the 200-round game horizon.
+
+---
+
+## Next Steps
+
+**E-010: The Grudger threshold.** The invasion analysis places the Pavlov→Grudger
+transition between ε=0.01 and ε=0.02. A fine-grained sweep — ε ∈ {0.010, 0.012,
+0.014, 0.016, 0.018, 0.020} — can locate the critical noise level where Grudger's invasion
+probability crosses 50%. This is the boundary of Pavlov's evolutionary viability.

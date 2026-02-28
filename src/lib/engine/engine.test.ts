@@ -569,3 +569,37 @@ describe("evolutionary multistability (E-008)", () => {
   });
 });
 
+// ─── Pavlov fixation stability (E-009) ────────────────────────────────────────
+
+describe("Pavlov fixation stability (E-009)", () => {
+  const n = allStrategies.length;
+  const pavlovIdx = allStrategies.findIndex(s => s.name === "Pavlov");
+  const baseShare = 0.10 / (n - 1);
+  const initShares = allStrategies.map((_, i) => i === pavlovIdx ? 0.90 : baseShare);
+
+  it("Pavlov is uninvadable at ε=0 — E-009 finding", () => {
+    const evo = runEvolution(allStrategies, 200, 200, 42, 0, initShares);
+    expect(evo.finalShares[pavlovIdx]).toBeGreaterThan(0.80);
+    // No invader should meaningfully grow
+    const maxInvaderShare = Math.max(
+      ...evo.finalShares.filter((_, i) => i !== pavlovIdx)
+    );
+    expect(maxInvaderShare).toBeLessThan(0.05);
+  });
+
+  it("Grudger completely displaces Pavlov at ε=0.02 — E-009 finding", () => {
+    const evo = runEvolution(allStrategies, 200, 200, 42, 0.02, initShares);
+    const grudgerIdx = allStrategies.findIndex(s => s.name === "Grudger");
+    expect(evo.finalShares[pavlovIdx]).toBeLessThan(0.01); // Pavlov extinct
+    expect(evo.finalShares[grudgerIdx]).toBeGreaterThan(0.80); // Grudger dominates
+  });
+
+  it("TFT can invade Pavlov at ε=0.01 but TF2T cannot — E-009 finding", () => {
+    const evo = runEvolution(allStrategies, 200, 200, 42, 0.01, initShares);
+    const tftIdx  = allStrategies.findIndex(s => s.name === "Tit for Tat");
+    const tf2tIdx = allStrategies.findIndex(s => s.name === "Tit for Two Tats");
+    expect(evo.finalShares[tftIdx]).toBeGreaterThan(baseShare * 2); // TFT grows
+    expect(evo.finalShares[tf2tIdx]).toBeLessThan(baseShare * 0.5); // TF2T shrinks
+  });
+});
+
