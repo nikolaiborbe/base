@@ -99,6 +99,74 @@ export const contriteTFT: Strategy = {
   },
 };
 
+/**
+ * Gradual: proportional retaliation with de-escalation.
+ * (Mathieu & Delahaye 2002 / 2017)
+ *
+ * Tracks the opponent's total defections D_total. When the opponent defects
+ * while Gradual is in "normal" mode, it enters a punishment burst of D_total
+ * consecutive defections, then a calm phase of 2 cooperations. Defections
+ * observed during punishment or calm increase D_total for the *next* burst
+ * but do not interrupt the current sequence.
+ *
+ * The proportional escalation makes Gradual harder to exploit than TFT while
+ * the calm phase signals willingness to restore cooperation — better than
+ * Grudger's permanent retaliation.
+ */
+export const gradual: Strategy = {
+  name: "Gradual",
+  description:
+    "Retaliates proportionally: after the opponent's k-th cumulative defection, punishes with k consecutive D's then 2 C's to restore peace. Escalation scales with history; calm periods signal continued willingness to cooperate.",
+  move: ({ mine, opponent }) => {
+    // Reconstruct current phase by replaying the full history.
+    // State: punishLeft = remaining D's in burst; calmLeft = remaining peace C's; dTotal = opponent's defect count.
+    let punishLeft = 0;
+    let calmLeft   = 0;
+    let dTotal     = 0;
+
+    for (let t = 0; t < opponent.length; t++) {
+      // Step 1: advance phase (we already played mine[t])
+      if (punishLeft > 0) {
+        punishLeft--;
+        if (punishLeft === 0) { calmLeft = 2; }
+      } else if (calmLeft > 0) {
+        calmLeft--;
+      }
+
+      // Step 2: observe opponent[t] and update dTotal; start punish if normal
+      if (opponent[t] === "D") {
+        dTotal++;
+        if (punishLeft === 0 && calmLeft === 0) {
+          punishLeft = dTotal;
+        }
+      }
+    }
+
+    if (punishLeft > 0) return "D";
+    if (calmLeft   > 0) return "C";
+    return "C";
+  },
+};
+
+// ─── Parameterised strategy factory ──────────────────────────────────────────
+
+/**
+ * Returns a Generous TFT variant with a configurable forgiveness probability.
+ * p=0 → standard TFT (never forgives); p=0.33 → canonical GenTFT; p=1 → AllCooperate.
+ * Useful for sweeping forgiveness rates to find the noise-optimal value.
+ */
+export function makeGenTFT(p: number): Strategy {
+  return {
+    name: `GenTFT(p=${p.toFixed(2)})`,
+    description: `Generous TFT with forgiveness probability ${p.toFixed(2)}: cooperates after opponent defection with probability p.`,
+    move: ({ opponent }, rng: RNG) => {
+      if (opponent.length === 0) return "C";
+      if (opponent[opponent.length - 1] === "D") return rng() < p ? "C" : "D";
+      return "C";
+    },
+  };
+}
+
 // ─── Zero-Determinant strategies (Press & Dyson 2012) ───────────────────────
 
 /**
@@ -133,6 +201,7 @@ export const allStrategies: Strategy[] = [
   pavlov,
   generousTFT,
   contriteTFT,
+  gradual,
   allCooperate,
   allDefect,
   suspiciousTFT,

@@ -14,6 +14,7 @@ import {
   suspiciousTFT,
   generousTFT,
   contriteTFT,
+  gradual,
   zdExtorter,
   random,
   allStrategies,
@@ -484,5 +485,51 @@ describe("ContriteTFT", () => {
     const ctftJoint = ctftVsCtft.totalA + ctftVsCtft.totalB;
     const tftJoint  = tftVsTft.totalA   + tftVsTft.totalB;
     expect(ctftJoint).toBeGreaterThan(tftJoint);
+  });
+});
+
+// ─── Gradual (E-007) ──────────────────────────────────────────────────────────
+
+describe("Gradual", () => {
+  it("cooperates on round 1", () => {
+    const r = playGame(gradual, allDefect, 1, mulberry32(1));
+    expect(r.rounds[0].moveA).toBe("C");
+  });
+
+  it("cooperates indefinitely against AllCooperate", () => {
+    const r = playGame(gradual, allCooperate, 50, mulberry32(1));
+    expect(r.coopRateA).toBe(1);
+    expect(r.totalA).toBe(150); // 3 × 50
+  });
+
+  it("punishes with 1 D then 2 calm C's after the first defection — proportional response", () => {
+    // vs AllDefect: C D CC DDDD CC ...
+    // Round 1: C (first move)
+    // Round 2: D (1st punishment burst, dTotal=1 → punishLeft=1)
+    // Rounds 3-4: C C (calm phase, calmLeft=2)
+    // Round 5 onward: DDDD (dTotal=4 accumulated during punish+calm → punishLeft=4)
+    const r = playGame(gradual, allDefect, 10, mulberry32(1));
+    const moves = r.rounds.map(rnd => rnd.moveA).join("");
+    expect(moves).toBe("CDCCDDDDCC");
+  });
+
+  it("second punishment burst is longer than the first — escalation", () => {
+    // First burst: 1 D. After calm: dTotal≥2, so next burst > 1.
+    const r = playGame(gradual, allDefect, 20, mulberry32(1));
+    const moves = r.rounds.map(rnd => rnd.moveA).join("");
+    // Find index of first D (round 1), then find next run of D's after the calm phase
+    const firstD = moves.indexOf("D");
+    const calmEnd = moves.indexOf("D", firstD + 1); // start of second burst
+    const firstBurst = moves.slice(firstD, firstD + moves.slice(firstD).replace(/^D+/, "").search(/D/) + moves.slice(firstD).match(/^D+/)![0].length).match(/^D+/)![0].length;
+    const secondBurstStart = moves.indexOf("D", firstD + 1 + 2); // skip calm CC
+    const secondBurstEnd = secondBurstStart + moves.slice(secondBurstStart).match(/^D+/)![0].length;
+    const secondBurst = secondBurstEnd - secondBurstStart;
+    expect(secondBurst).toBeGreaterThan(firstBurst);
+  });
+
+  it("Gradual finishes first in a clean tournament — E-007 finding", () => {
+    const r = runRoundRobin(allStrategies, 200, 42);
+    const gradualRank = r.entries.findIndex(e => e.name === "Gradual") + 1;
+    expect(gradualRank).toBe(1);
   });
 });
