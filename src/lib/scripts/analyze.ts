@@ -12,7 +12,7 @@ import { allStrategies } from "../strategies/index.js";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const MODE: "single" | "variance" | "evolution" = "evolution";
+const MODE: "single" | "variance" | "evolution" | "noise-sweep" = "noise-sweep";
 
 const ROUNDS      = 200;
 const SEED        = 42;
@@ -125,6 +125,55 @@ if (MODE === "evolution") {
   for (const { name, share } of final) {
     const bar = "█".repeat(Math.round(share * 80));
     console.log(`  ${name.padEnd(26)} ${pct(share).padStart(7)}  ${bar}`);
+  }
+}
+
+// ─── Noise sweep ──────────────────────────────────────────────────────────────
+
+if (MODE === "noise-sweep") {
+  const NOISE_LEVELS = [0, 0.01, 0.02, 0.05, 0.10, 0.15];
+  const SWEEP_RUNS   = 100;
+  const SWEEP_ROUNDS = 200;
+
+  console.log(`\n═══ Noise Sweep (ε ∈ {${NOISE_LEVELS.join(", ")}}, ${SWEEP_RUNS} runs each, ${SWEEP_ROUNDS} rds/match) ═══\n`);
+
+  // Collect mean scores per strategy per noise level
+  const results = NOISE_LEVELS.map(ε => runMany(allStrategies, SWEEP_ROUNDS, SWEEP_RUNS, 0, ε));
+
+  // Print mean-score table
+  const header = L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join("");
+  console.log(header);
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+
+  // Print in order of ε=0 ranking
+  const baseOrder = results[0].stats.map(s => s.name);
+  for (const name of baseOrder) {
+    const row = L(name, 26) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanScore.toFixed(0), 9);
+    }).join("");
+    console.log(row);
+  }
+
+  // Print rank table
+  console.log(`\nRanks (mean rank across ${SWEEP_RUNS} seeds):\n`);
+  console.log(L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join(""));
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+  for (const name of baseOrder) {
+    const row = L(name, 26) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanRank.toFixed(2), 9);
+    }).join("");
+    console.log(row);
+  }
+
+  // Find crossover points
+  console.log("\nCrossover detection (TFT vs Generous TFT mean rank):");
+  for (const r of results) {
+    const tft  = r.stats.find(s => s.name === "Tit for Tat")!;
+    const gtft = r.stats.find(s => s.name === "Generous TFT")!;
+    const grudger = r.stats.find(s => s.name === "Grudger")!;
+    console.log(`  ε=${String(r.noise).padEnd(4)}  TFT rank=${tft.meanRank.toFixed(2)}  GenTFT rank=${gtft.meanRank.toFixed(2)}  Grudger rank=${grudger.meanRank.toFixed(2)}  Grudger score=${grudger.meanScore.toFixed(0)}`);
   }
 }
 

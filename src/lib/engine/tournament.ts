@@ -11,6 +11,7 @@ export function runRoundRobin(
   strategies: Strategy[],
   rounds: number,
   seed?: number,
+  noise = 0,
 ): TournamentResult {
   const rng = seed !== undefined ? mulberry32(seed) : defaultRng;
   const entryMap = new Map<string, TournamentEntry>();
@@ -32,7 +33,7 @@ export function runRoundRobin(
     for (let j = i; j < strategies.length; j++) {
       const a = strategies[i];
       const b = strategies[j];
-      const result = playGame(a, b, rounds, rng);
+      const result = playGame(a, b, rounds, rng, noise);
 
       const ea = entryMap.get(a.name)!;
       const eb = entryMap.get(b.name)!;
@@ -81,5 +82,6 @@ export function runRoundRobin(
     entries,
     roundsPerMatch: rounds,
     strategyCount: strategies.length,
+    noise,
   };
 }

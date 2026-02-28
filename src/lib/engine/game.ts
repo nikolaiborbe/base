@@ -13,6 +13,7 @@ export function playGame(
   stratB: Strategy,
   rounds: number,
   rng: RNG = defaultRng,
+  noise = 0,
 ): GameResult {
   const histA: Move[] = [];
   const histB: Move[] = [];
@@ -21,8 +22,12 @@ export function playGame(
   const roundResults = [];
 
   for (let i = 0; i < rounds; i++) {
-    const moveA = stratA.move({ mine: [...histA], opponent: [...histB] }, rng);
-    const moveB = stratB.move({ mine: [...histB], opponent: [...histA] }, rng);
+    const intentA = stratA.move({ mine: [...histA], opponent: [...histB] }, rng);
+    const intentB = stratB.move({ mine: [...histB], opponent: [...histA] }, rng);
+    // Environmental noise: each move is independently flipped with probability ε.
+    // The flipped move goes into history — both players observe the noisy action.
+    const moveA: Move = noise > 0 && rng() < noise ? (intentA === "C" ? "D" : "C") : intentA;
+    const moveB: Move = noise > 0 && rng() < noise ? (intentB === "C" ? "D" : "C") : intentB;
     const [scoreA, scoreB] = PAYOFF[moveA][moveB];
 
     histA.push(moveA);

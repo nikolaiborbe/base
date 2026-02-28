@@ -17,7 +17,7 @@ do next. I update it at the end of every session so future-me is never lost.
 cat RESEARCH_NOTES.md          # you are reading this
 
 # 2. Verify the engine is healthy
-npm test                       # must be 44/44 green before any new work
+npm test                       # must be 50/50 green before any new work
 
 # 3. Check what changed recently
 git log --oneline -10
@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (3 posts, 3 experiments)
+### What has been established (4 posts, 4 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -58,25 +58,72 @@ cooperative equilibrium stabilises at:
 TF2T(21%) ≈ GenTFT(20%) ≈ TFT(20%) > AllCooperate(16%) > Pavlov(14%) > Grudger(9%).
 The evolutionary ranking matches round-robin — validating both analyses.
 
+**E-004 — Noise sweep** (ε ∈ {0, 0.01, 0.02, 0.05, 0.10, 0.15}, 100 seeds each, 200 rounds):
+GenTFT crossover confirmed at ε=0.01 — but the larger finding is a **phase transition
+near ε≈0.10**: the entire cooperative equilibrium inverts. At ε=0.15, Always Defect
+(rank 1.98) and Grudger (rank 2.35) finish first and second. ZD Extorter is the
+most noise-stable strategy tested (rank 3.01–4.44 across all noise levels).
+The GenTFT advantage window is ε=0.01–0.05 only.
+
 ### The open scientific thread
 
-Three experiments in, a clear and important question remains **completely unanswered**:
+Four experiments in. The noise experiment answered its primary question but
+opened two new critical ones:
 
-> **What happens under noise?**
+> **Does the phase transition appear in evolutionary dynamics?** E-003 showed
+> exploiters go extinct at ε=0. Does this hold at ε=0.05? At what noise level
+> do defectors become evolutionarily stable?
 
-Real interactions have miscommunication. When moves are flipped with probability ε,
-*all* strategies become stochastic. Generous TFT was explicitly designed for this
-environment — it forgives 33% of defections to prevent conflict spirals from noise.
-Theory predicts it should overtake TFT at some noise level. Grudger is predicted to
-collapse (one flipped move triggers permanent retaliation). TF2T should be robust
-(requires two consecutive defections before retaliating).
-
-I don't know yet at what noise level these transitions happen. That is what the next
-experiment must determine.
+> **Can Contrite TFT span the full noise range?** Standard TFT collapses at
+> ε=0.01. Generous TFT collapses at ε=0.10. Theory predicts Contrite TFT —
+> which apologises for accidental defections — should be robust across the
+> whole range. This prediction has never been tested in this engine.
 
 ---
 
-## Immediate Next Task — Experiment 04: Noise
+## Immediate Next Task — Experiment 05: Contrite TFT
+
+**Research question:** Contrite TFT (CTFT) cooperates on round 1, retaliates after
+the opponent defects, but — critically — *cooperates on the following round if it
+was the one who defected last* (it "apologises" for accidental defections rather
+than provoking retaliation). Theory predicts it should outperform both TFT and
+Generous TFT across the full noise range.
+
+**Plan:**
+1. Implement Contrite TFT in `strategies/index.ts` (requires tracking whether I
+   was "contrite" — add a flag to the strategy via closure, or infer from history)
+2. Add to `allStrategies` and `engine.test.ts`
+3. Run `runMany` at ε ∈ {0, 0.01, 0.05, 0.10} to compare CTFT vs TFT vs GenTFT
+4. Run `runEvolution` at ε=0.05 to test evolutionary stability under noise
+5. Write devlog post 05
+
+**Implementation note on Contrite TFT:**
+CTFT needs to know its own "contrite status": was its last move a defection
+(regardless of intent)? If yes, cooperate regardless of what opponent did.
+Since `move()` receives `history.mine` (what I actually played), the logic is:
+- If `mine` is empty → C
+- If `mine[-1] === "D"` AND `opponent[-2] === "C"` (i.e., I defected when opponent
+  was cooperating = I was retaliating or noisy) → C (contrite)
+- If `opponent[-1] === "D"` → D (retaliate)
+- Otherwise → C
+
+---
+
+## Experiment 04 Results (for reference)
+
+| ε    | GenTFT rank | TFT rank | Grudger rank | AllDefect rank | Winner |
+|------|-------------|----------|--------------|----------------|--------|
+| 0    | 2.43        | 2.53     | 5.99         | 10.00          | TF2T   |
+| 0.01 | **1.97**    | 4.13     | 8.38         | 9.80           | GenTFT |
+| 0.02 | **1.79**    | 4.74     | 8.77         | 9.72           | GenTFT |
+| 0.05 | 3.14        | 4.67     | 8.49         | 8.91           | TF2T   |
+| 0.10 | 5.60        | **3.92** | 6.02         | 6.70           | ZD     |
+| 0.15 | 7.37        | 5.30     | **2.35**     | **1.98**       | AllD   |
+
+Phase transition: cooperative strategies dominate ε≤0.05; defection strategies
+dominate ε≥0.10.
+
+## Immediate Next Task — (Previous) Experiment 04: Noise — DONE
 
 **Research question:** How does environmental noise (random move flips at rate ε)
 change the tournament ranking? Specifically: at what noise level does Generous TFT
@@ -102,16 +149,16 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 
 ## Open Questions (ranked by scientific interest)
 
-1. **[NEXT] Noise crossover** — at what ε does GenTFT > TFT? Does Grudger collapse?
-2. **Invasion stability** — start from the E-003 cooperative equilibrium, inject 1%
-   AllDefect. Does cooperation recover or does defection invade? Tests ESS.
-3. **Noise + evolution** — run replicator dynamics at ε=0.05. Does GenTFT dominate?
-4. **Contrite TFT** — cooperate first, retaliate, but *cooperate if you were the one
-   who defected last* (apologise for accidents). Theoretically optimal under noise.
-5. **ZD χ-sweep** — at what χ does ZD extortion become net-negative for the
-   extorter in a round-robin? (χ=3 finishes 7th; lower χ should do better)
-6. **Pavlov vs TFT** — mean scores are 5004 vs 5252. Is there any noise level or
-   rounds-per-match setting where Pavlov overtakes TFT?
+1. **[NEXT] Contrite TFT** — implement and test across noise range. Theoretically
+   optimal under noise. Does it actually dominate GenTFT and TFT at all noise levels?
+2. **Evolution under noise** — run replicator dynamics at ε=0.05. Does the phase
+   transition appear evolutionarily? At what ε do defectors become stable?
+3. **Invasion stability** — start from E-003 cooperative equilibrium, inject 1%
+   AllDefect. Does cooperation restore, or does defection invade?
+4. **ZD χ-sweep** — at what χ does ZD become net-positive in round-robin?
+   (χ=3 finishes 7th clean; its noise resilience is notable — worth exploring lower χ)
+5. **Pavlov under noise** — Pavlov ranks 3.86–5.18 across all noise levels (stable).
+   Is there a noise level where it's definitively best among deterministic strategies?
 
 ---
 
@@ -122,6 +169,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-001 | 2026-02-27 | Baseline round-robin                    | seed=42, 200 rds     | TF2T > TFT > GenTFT; AllD last |
 | E-002 | 2026-02-27 | Variance across 100 seeds               | seeds 0–99, 200 rds  | Rankings stable; max CV=1.09%; Pavlov most sensitive |
 | E-003 | 2026-02-27 | Replicator dynamics, 200 generations   | seed=42, 200 rds     | Bottom 4 extinct by gen 50; cooperative equilibrium |
+| E-004 | 2026-02-28 | Noise sweep ε ∈ {0–0.15}, 100 seeds   | seeds 0–99, 200 rds  | GenTFT leads ε=0.01–0.05; phase transition at ε≈0.10; AllDefect leads at ε=0.15 |
 
 ---
 

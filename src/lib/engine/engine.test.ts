@@ -399,3 +399,53 @@ describe("runEvolution", () => {
     r.history.forEach((snap, i) => expect(snap.generation).toBe(i));
   });
 });
+
+// ─── Noise (E-004 regression tests) ──────────────────────────────────────────
+// These tests encode the key findings from the noise sweep experiment.
+// If engine changes break these, the finding needs to be re-examined.
+
+describe("noise effects (E-004)", () => {
+  it("at ε=0, noise=0 results match no-noise results exactly", () => {
+    const clean = runRoundRobin(allStrategies, 100, 42, 0);
+    const noisy = runRoundRobin(allStrategies, 100, 42);   // default noise=0
+    expect(clean.entries.map(e => e.totalScore))
+      .toEqual(noisy.entries.map(e => e.totalScore));
+  });
+
+  it("noise produces different outcomes than no-noise (same seed)", () => {
+    const clean = runRoundRobin(allStrategies, 200, 42, 0);
+    const noisy = runRoundRobin(allStrategies, 200, 42, 0.10);
+    const cleanScores = clean.entries.map(e => e.totalScore);
+    const noisyScores = noisy.entries.map(e => e.totalScore);
+    expect(cleanScores).not.toEqual(noisyScores);
+  });
+
+  it("Generous TFT outranks TFT at low noise (ε=0.01) — E-004 finding", () => {
+    // GenTFT was designed for noisy environments; at ε=0.01 it should rank above TFT
+    const result = runMany(allStrategies, 200, 40, 0, 0.01);
+    const tft  = result.stats.find(s => s.name === "Tit for Tat")!;
+    const gtft = result.stats.find(s => s.name === "Generous TFT")!;
+    expect(gtft.meanRank).toBeLessThan(tft.meanRank);
+  });
+
+  it("Always Cooperate collapses at high noise — E-004 finding", () => {
+    // AllCooperate has no way to punish exploitation; at ε=0.05 it should be near last
+    const result = runMany(allStrategies, 200, 40, 0, 0.05);
+    const allC = result.stats.find(s => s.name === "Always Cooperate")!;
+    expect(allC.meanRank).toBeGreaterThan(8); // should be 9th or 10th
+  });
+
+  it("Always Defect score rises with noise — E-004 finding", () => {
+    // Under high noise all strategies look defective; AllDefect benefits from the chaos
+    const clean = runMany(allStrategies, 200, 40, 0, 0);
+    const noisy = runMany(allStrategies, 200, 40, 0, 0.15);
+    const adClean = clean.stats.find(s => s.name === "Always Defect")!;
+    const adNoisy = noisy.stats.find(s => s.name === "Always Defect")!;
+    expect(adNoisy.meanScore).toBeGreaterThan(adClean.meanScore);
+  });
+
+  it("noise TournamentResult carries the noise value", () => {
+    const r = runRoundRobin(allStrategies, 50, 42, 0.05);
+    expect(r.noise).toBe(0.05);
+  });
+});

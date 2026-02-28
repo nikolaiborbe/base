@@ -55,4 +55,6 @@ export interface TournamentResult {
   entries: TournamentEntry[];
   roundsPerMatch: number;
   strategyCount: number;
+  /** Probability that any move is randomly flipped before the opponent observes it. */
+  noise: number;
 }

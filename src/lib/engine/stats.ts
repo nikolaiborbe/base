@@ -24,6 +24,7 @@ export interface MultiRunResult {
   rounds: number;
   /** Seeds used: baseSeed, baseSeed+1, …, baseSeed+n-1 */
   baseSeed: number;
+  noise: number;
 }
 
 /**
@@ -42,6 +43,7 @@ export function runMany(
   rounds: number,
   n: number,
   baseSeed = 0,
+  noise = 0,
 ): MultiRunResult {
   // Per-strategy accumulators
   const scores:    Map<string, number[]> = new Map();
@@ -55,7 +57,7 @@ export function runMany(
   }
 
   for (let i = 0; i < n; i++) {
-    const result = runRoundRobin(strategies, rounds, baseSeed + i);
+    const result = runRoundRobin(strategies, rounds, baseSeed + i, noise);
     for (let r = 0; r < result.entries.length; r++) {
       const e = result.entries[r];
       scores.get(e.name)!.push(e.totalScore);
@@ -83,7 +85,7 @@ export function runMany(
   // Sort by mean score descending (same convention as runRoundRobin)
   stats.sort((a, b) => b.meanScore - a.meanScore);
 
-  return { stats, n, rounds, baseSeed };
+  return { stats, n, rounds, baseSeed, noise };
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
