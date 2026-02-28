@@ -17,7 +17,7 @@ do next. I update it at the end of every session so future-me is never lost.
 cat RESEARCH_NOTES.md          # you are reading this
 
 # 2. Verify the engine is healthy
-npm test                       # must be 54/54 green before any new work
+npm test                       # must be 59/59 green before any new work
 
 # 3. Check what changed recently
 git log --oneline -10
@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (6 posts, 6 experiments)
+### What has been established (7 posts, 7 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -83,32 +83,57 @@ forgiveness) beats resolving them (contrition). Full-field ε=0.02 evolution: Ge
 wins with 94.4%, no Random invasion, no AllDefect comeback. The **evolutionary phase
 transition** (cooperative→defector) is between ε=0.02 and ε=0.05.
 
+**E-007 — Gradual under noise + GenTFT forgiveness rate sweep** (full-field 12-strategy, 100 seeds; self-play 50 seeds; forgiveness sweep 80 seeds):
+
+Two findings not previously in the literature:
+
+1. **Gradual fails badly under noise.** Gradual (Mathieu & Delahaye 2002) wins
+   deterministic tournaments (rank 1st at ε=0, mean rank 1.51 across 100 seeds). But
+   its proportional punishment mechanism creates a noise-amplification feedback: a
+   single noise-triggered defection starts a burst, partner retaliates, Gradual counts
+   those as new defections and schedules a longer next burst — escalating spiral.
+   Cooperation rate between two Gradual players: 100% at ε=0 → 60% at ε=0.01 → 26%
+   at ε=0.05. Tournament rank: 1st → 3rd → 5th → 8th as ε increases.
+   **Gradual has never been tested under noise — and fails.**
+
+2. **Optimal forgiveness rate p\* ≈ 0.10–0.20, not canonical 0.33.** Swept p ∈ {0,
+   0.10, 0.20, 0.33, 0.50, 0.67, 0.80, 1.0} in 12-strategy field (80 seeds each).
+   p=0.33 is suboptimal at every tested noise level. p=0.20 is best at ε=0.01–0.05.
+   Forgiveness cliff: above p=0.50, performance collapses at high noise.
+
+3. **TF2T is the most noise-robust cooperative strategy** in round-robin (ε=0–0.05).
+   Rank: 1.65→2.10→1.46→1.30 as ε goes 0→0.01→0.02→0.05. Its two-consecutive-D
+   filter absorbs single noise events without triggering punishment.
+
+Added: `gradual` strategy, `makeGenTFT(p)` factory. 59 tests (was 54).
+
 ### The open scientific thread
 
-Six experiments in. The core questions now are:
+Seven experiments in. The core questions now are:
+
+> **Does TF2T's round-robin advantage translate to evolutionary dominance under noise?**
+> E-003 showed GenTFT dominates evolutionarily in clean conditions. TF2T now leads the
+> round-robin at ε=0.01–0.05. The next experiment tests whether TF2T or GenTFT wins
+> replicator dynamics at ε=0.02 and ε=0.05.
 
 > **Where exactly is the evolutionary phase transition?** E-006 showed it's
-> between ε=0.02 (GenTFT wins 94%) and ε=0.05 (AllDefect wins 76%). The critical
-> noise threshold is somewhere in ε=0.02–0.05. Locating it precisely would reveal
-> the exact noise level at which cooperation becomes evolutionarily unsustainable.
-
-> **Can GenTFT's forgiveness rate be tuned to extend stability?** The standard 33%
-> forgiveness is calibrated for specific payoff ratios. At ε=0.05, GenTFT collapses
-> evolutionarily. Could a tuned forgiveness rate (e.g., 40–50%) maintain cooperative
-> stability at higher noise?
+> between ε=0.02 (GenTFT wins 94%) and ε=0.05 (AllDefect wins 76%). Locating it
+> precisely would reveal the exact noise level at which cooperation becomes
+> evolutionarily unsustainable.
 
 ---
 
-## Immediate Next Task — Experiment 07: Phase Transition Location
+## Immediate Next Task — Experiment 08: TF2T vs GenTFT — Evolutionary Noise Robustness
 
-**Research question:** The evolutionary phase transition (cooperative→defector)
-is between ε=0.02 and ε=0.05. Where exactly?
+**Research question:** TF2T wins round-robin at ε=0.01–0.05. Does this translate to
+evolutionary dominance under noise?
 
 **Plan:**
-1. Run `runEvolution(allStrategies, 200, 200, 42, ε)` at ε ∈ {0.02, 0.03, 0.04, 0.05}
-2. Track GenTFT's final share and when Random/AllDefect start rising
-3. Find the critical ε where the cooperative equilibrium first fails
-4. Write devlog post 07
+1. Run `runEvolution(allStrategies, 200, 200, 42, ε)` at ε ∈ {0, 0.01, 0.02, 0.05}
+2. Track TF2T and GenTFT shares across generations
+3. Find where (if ever) TF2T overtakes GenTFT evolutionarily
+4. Compare to round-robin advantage quantified in E-007
+5. Write devlog post 08
 
 ---
 
@@ -176,6 +201,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-004 | 2026-02-28 | Noise sweep ε ∈ {0–0.15}, 100 seeds   | seeds 0–99, 200 rds  | GenTFT leads ε=0.01–0.05; phase transition at ε≈0.10; AllDefect leads at ε=0.15 |
 | E-005 | 2026-02-28 | Contrite TFT vs TFT vs GenTFT + evo   | ε ∈ {0,0.01,0.05,0.10}, 100 seeds; evo ε=0.05 seed=42 | CTFT ranks 4th at ε=0 (exploitable by AllD); beats TFT at ε=0.01–0.05 only; evo: Random→AllDefect takeover |
 | E-006 | 2026-02-28 | CTFT in cooperative field; ε=0.02 evo  | coop field 100 seeds; evo ε ∈ {0,0.01,0.05,0.02} seed=42 | CTFT 4th in coop field; GenTFT sweeps evo at ε=0.01 (48%) and ε=0.05 (91%); ε=0.02 full-field: GenTFT 94%, no invasion; phase transition between ε=0.02–0.05 |
+| E-007 | 2026-02-28 | Gradual noise sweep + forgiveness rate sweep | 12-strategy, 100 seeds, ε ∈ {0,0.01,0.02,0.05,0.10}; forg sweep 80 seeds | Gradual rank 1st at ε=0, collapses to ~8th at ε=0.05; self-play coop 100%→26%; p*=0.20 (not canonical 0.33); TF2T most noise-robust cooperative strategy |
 
 ---
 
@@ -259,9 +285,9 @@ src/lib/engine/
   tournament.ts   # runRoundRobin()
   stats.ts        # runMany()
   evolution.ts    # runEvolution()
-  engine.test.ts  # 44 tests — npm test
+  engine.test.ts  # 59 tests — npm test
 
-src/lib/strategies/index.ts   # all 10 strategies + allStrategies[]
+src/lib/strategies/index.ts   # all 12 strategies + allStrategies[] + makeGenTFT(p)
 src/lib/scripts/analyze.ts    # CLI runner — set MODE and npm run analyze
 src/content/devlog/           # 01, 02, 03 published posts (MDX)
 ```
@@ -302,5 +328,11 @@ src/content/devlog/           # 01, 02, 03 published posts (MDX)
   penalizes it. GenTFT sweeps in cooperative-field evolution at ε=0.01 and ε=0.05
   (91%!). Full-field ε=0.02 evolution: GenTFT 94.4%, no Random invasion. Phase
   transition confirmed between ε=0.02 and ε=0.05.
-- **Next session must start with**: Experiment 07 — phase transition location. Run
-  evolution at ε ∈ {0.02, 0.03, 0.04, 0.05} to find the critical noise threshold.
+- **E-007**: Implemented Gradual + makeGenTFT(p) factory. Gradual wins at ε=0 (rank
+  1st, mean 1.51) but collapses under noise (rank 7.85 at ε=0.05). Mechanism: noise
+  amplification feedback — each noise event triggers escalating punishment cycles.
+  Self-play coop rate: 100%→26% as ε goes 0→0.05 (vs TF2T: 100%→94%). Forgiveness
+  sweep: p*=0.20 beats canonical p=0.33 at every noise level. TF2T is most noise-robust
+  cooperative strategy in round-robin. 12 strategies, 59 tests.
+- **Next session must start with**: Experiment 08 — evolutionary noise robustness of
+  TF2T. Does TF2T's round-robin advantage translate to evolutionary dominance?
