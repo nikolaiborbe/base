@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (7 posts, 7 experiments)
+### What has been established (8 posts, 8 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -107,33 +107,61 @@ Two findings not previously in the literature:
 
 Added: `gradual` strategy, `makeGenTFT(p)` factory. 59 tests (was 54).
 
+**E-008 — Evolutionary multistability under noise** (40 seeds, 200 generations, 12 strategies, ε ∈ {0, 0.01, 0.02, 0.05}):
+
+TF2T's round-robin advantage does NOT translate to evolutionary dominance under noise.
+Noise fractures the cooperative equilibrium into multiple stable attractors:
+
+1. **Multistability**: At ε=0, TF2T wins 68% of seeds (27/40). At ε=0.01, six
+   different strategies each win 8–25% of seeds. At ε=0.05, 9 different strategies
+   win across 40 seeds. The unique cooperative attractor shatters under noise.
+
+2. **Pavlov as evolutionary attractor**: Pavlov ranks 4th–7th in round-robin at all
+   noise levels, but wins 25% (ε=0.01), 35% (ε=0.02), 25% (ε=0.05) of evolutionary
+   trajectories. Its fixation stability — hard to invade when common — outweighs its
+   mediocre mixed-field score. Pavlov's Win-Stay/Lose-Shift rule recovers mutual
+   cooperation in one round after symmetric noise events (both shift from DD to CC).
+
+3. **Cooperation survives**: Defection strategies win at most 12% of trajectories
+   across all noise levels tested. Cooperation is robust in aggregate; which cooperative
+   strategy wins is unpredictable.
+
+4. **Round-robin ≠ evolutionary fitness**: Payoff matrix noise creates multiple
+   basins of attraction. Small perturbations (different seeds) tip the dynamics toward
+   different equilibria. Fixation stability matters as much as mixed-field score.
+
+62 tests (was 59). 3 new E-008 regression tests.
+
 ### The open scientific thread
 
-Seven experiments in. The core questions now are:
+Eight experiments in. The core questions now are:
 
-> **Does TF2T's round-robin advantage translate to evolutionary dominance under noise?**
-> E-003 showed GenTFT dominates evolutionarily in clean conditions. TF2T now leads the
-> round-robin at ε=0.01–0.05. The next experiment tests whether TF2T or GenTFT wins
-> replicator dynamics at ε=0.02 and ε=0.05.
+> **What determines Pavlov's basin of attraction?** Pavlov wins evolutionarily
+> despite mediocre round-robin scores. E-009 should test fixation stability directly:
+> starting from a Pavlov-dominated population, which strategies can invade, and at
+> what noise level?
 
-> **Where exactly is the evolutionary phase transition?** E-006 showed it's
-> between ε=0.02 (GenTFT wins 94%) and ε=0.05 (AllDefect wins 76%). Locating it
-> precisely would reveal the exact noise level at which cooperation becomes
-> evolutionarily unsustainable.
+> **Is the multistability a function of the mean-field approximation?** The replicator
+> dynamics use a single payoff matrix per run. Real populations have ongoing payoff
+> variance. Does the multistability persist under richer population dynamics?
 
 ---
 
-## Immediate Next Task — Experiment 08: TF2T vs GenTFT — Evolutionary Noise Robustness
+## Immediate Next Task — Experiment 09: Pavlov's Fixation Stability
 
-**Research question:** TF2T wins round-robin at ε=0.01–0.05. Does this translate to
-evolutionary dominance under noise?
+**Research question:** Pavlov wins evolutionarily in many seeds despite low round-robin
+rank. The mechanism is fixation stability (hard to invade when common). Which strategies
+can actually invade a Pavlov-dominated population, and at what noise level?
 
 **Plan:**
-1. Run `runEvolution(allStrategies, 200, 200, 42, ε)` at ε ∈ {0, 0.01, 0.02, 0.05}
-2. Track TF2T and GenTFT shares across generations
-3. Find where (if ever) TF2T overtakes GenTFT evolutionarily
-4. Compare to round-robin advantage quantified in E-007
-5. Write devlog post 08
+1. For each invader in `allStrategies`, run evolution starting from a population
+   that is 90% Pavlov + 10% invader (use equal initial shares otherwise)
+2. Track whether the invader grows or shrinks over 200 generations
+3. Measure invasion success rate across ε ∈ {0, 0.01, 0.02, 0.05}
+4. Write devlog post 09
+
+**Implementation note:** `runEvolution` currently starts from equal shares. To test
+invasion, either modify initial shares or use a custom wrapper.
 
 ---
 
@@ -202,6 +230,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-005 | 2026-02-28 | Contrite TFT vs TFT vs GenTFT + evo   | ε ∈ {0,0.01,0.05,0.10}, 100 seeds; evo ε=0.05 seed=42 | CTFT ranks 4th at ε=0 (exploitable by AllD); beats TFT at ε=0.01–0.05 only; evo: Random→AllDefect takeover |
 | E-006 | 2026-02-28 | CTFT in cooperative field; ε=0.02 evo  | coop field 100 seeds; evo ε ∈ {0,0.01,0.05,0.02} seed=42 | CTFT 4th in coop field; GenTFT sweeps evo at ε=0.01 (48%) and ε=0.05 (91%); ε=0.02 full-field: GenTFT 94%, no invasion; phase transition between ε=0.02–0.05 |
 | E-007 | 2026-02-28 | Gradual noise sweep + forgiveness rate sweep | 12-strategy, 100 seeds, ε ∈ {0,0.01,0.02,0.05,0.10}; forg sweep 80 seeds | Gradual rank 1st at ε=0, collapses to ~8th at ε=0.05; self-play coop 100%→26%; p*=0.20 (not canonical 0.33); TF2T most noise-robust cooperative strategy |
+| E-008 | 2026-02-28 | Evolutionary multistability under noise | 40 seeds × 4 noise levels, 200 gens, 12 strategies | TF2T round-robin lead ≠ evolutionary dominance; 6 distinct attractors at ε=0.01; Pavlov wins 25–35% of seeds under noise despite low round-robin rank |
 
 ---
 
@@ -285,7 +314,7 @@ src/lib/engine/
   tournament.ts   # runRoundRobin()
   stats.ts        # runMany()
   evolution.ts    # runEvolution()
-  engine.test.ts  # 59 tests — npm test
+  engine.test.ts  # 62 tests — npm test
 
 src/lib/strategies/index.ts   # all 12 strategies + allStrategies[] + makeGenTFT(p)
 src/lib/scripts/analyze.ts    # CLI runner — set MODE and npm run analyze
@@ -334,5 +363,10 @@ src/content/devlog/           # 01, 02, 03 published posts (MDX)
   Self-play coop rate: 100%→26% as ε goes 0→0.05 (vs TF2T: 100%→94%). Forgiveness
   sweep: p*=0.20 beats canonical p=0.33 at every noise level. TF2T is most noise-robust
   cooperative strategy in round-robin. 12 strategies, 59 tests.
-- **Next session must start with**: Experiment 08 — evolutionary noise robustness of
-  TF2T. Does TF2T's round-robin advantage translate to evolutionary dominance?
+- **E-008**: TF2T does NOT dominate evolutionarily under noise. Noise fractures the
+  unique ε=0 cooperative attractor into a multistable landscape. At ε=0.01: 6 distinct
+  winners across 40 seeds; Pavlov wins 25% despite ranking 5th in round-robin. Pavlov's
+  Win-Stay/Lose-Shift recovers cooperation in 1 round after symmetric noise events;
+  its fixation stability makes it a major evolutionary attractor. 62 tests.
+- **Next session must start with**: Experiment 09 — Pavlov fixation stability. Which
+  strategies can invade a Pavlov-dominated population, and at what noise level?

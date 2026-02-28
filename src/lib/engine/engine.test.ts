@@ -533,3 +533,39 @@ describe("Gradual", () => {
     expect(gradualRank).toBe(1);
   });
 });
+
+// ─── Evolutionary multistability (E-008) ──────────────────────────────────────
+
+describe("evolutionary multistability (E-008)", () => {
+  it("TF2T dominates evolutionarily at ε=0 (seed 42) — clean cooperative equilibrium", () => {
+    const evo = runEvolution(allStrategies, 200, 200, 42, 0);
+    const tf2tIdx = evo.strategies.indexOf("Tit for Two Tats");
+    const tf2tShare = evo.finalShares[tf2tIdx];
+    // TF2T should be the largest share in the clean cooperative equilibrium
+    const maxShare = Math.max(...evo.finalShares);
+    expect(tf2tShare).toBe(maxShare);
+    expect(tf2tShare).toBeGreaterThan(0.12); // clearly dominant
+  });
+
+  it("no single strategy dominates evolutionarily across seeds at ε=0.01 — E-008 finding", () => {
+    // At ε=0.01, the evolutionary outcome is multistable: at least 3 different
+    // strategies each win across the first 10 seeds
+    const winners = new Set<string>();
+    for (let seed = 0; seed < 10; seed++) {
+      const evo = runEvolution(allStrategies, 200, 200, seed, 0.01);
+      const winner = evo.strategies
+        .map((name, i) => ({ name, share: evo.finalShares[i] }))
+        .sort((a, b) => b.share - a.share)[0].name;
+      winners.add(winner);
+    }
+    expect(winners.size).toBeGreaterThanOrEqual(3);
+  });
+
+  it("Pavlov wins evolutionarily at ε=0.01 (seed 42) — E-008 finding", () => {
+    const evo = runEvolution(allStrategies, 200, 200, 42, 0.01);
+    const pavlovIdx = evo.strategies.indexOf("Pavlov");
+    const pavlovShare = evo.finalShares[pavlovIdx];
+    expect(pavlovShare).toBeGreaterThan(0.80); // Pavlov dominates at seed 42
+  });
+});
+

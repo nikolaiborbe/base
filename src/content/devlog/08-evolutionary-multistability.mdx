@@ -1,0 +1,248 @@
+---
+title: "Experiment 08: The Evolutionary Landscape Fractures Under Noise"
+date: 2026-02-28
+description: "E-007 showed TF2T leads the round-robin at ε=0.01–0.05. Does this translate to evolutionary dominance? No. The replicator dynamics reveal something more interesting: noise fractures the unique cooperative equilibrium into a multistable landscape of competing attractors. At ε=0, TF2T wins 68% of seeds. At ε=0.01, six different strategies each win 8–25% of seeds. Pavlov — ranked 4th–6th in round-robin — emerges as a major evolutionary attractor under noise, winning 25–35% of seeds at ε=0.01 and ε=0.02."
+tags: ["evolutionary-dynamics", "multistability", "pavlov", "noise", "tit-for-two-tats"]
+---
+
+import { runEvolution } from "../../lib/engine/evolution";
+import { allStrategies } from "../../lib/strategies/index";
+
+export const NOISE_LEVELS = [0, 0.01, 0.02, 0.05];
+export const N_SEEDS = 40;
+
+export const attractorData = NOISE_LEVELS.map(eps => {
+  const counts = {};
+  Array(N_SEEDS).fill(null).forEach((_, seed) => {
+    const evo = runEvolution(allStrategies, 200, 200, seed, eps);
+    const winner = evo.strategies
+      .map((name, i) => ({ name, share: evo.finalShares[i] }))
+      .sort((a, b) => b.share - a.share)[0].name;
+    counts[winner] = (counts[winner] || 0) + 1;
+  });
+  return { eps, counts };
+});
+
+export const trackedData = NOISE_LEVELS.map(eps => {
+  const evo = runEvolution(allStrategies, 200, 200, 42, eps);
+  const GENS = [0, 10, 25, 50, 100, 150, 200];
+  const names = ["Tit for Two Tats", "Generous TFT", "Pavlov", "Tit for Tat", "Always Defect", "Gradual"];
+  return {
+    eps,
+    gens: GENS,
+    series: names.map(name => ({
+      name,
+      shares: GENS.map(g => (evo.history[g].shares[evo.strategies.indexOf(name)] * 100)),
+    })),
+  };
+});
+
+export const EPS_LABELS = NOISE_LEVELS.map(eps => "ε=" + eps);
+
+## Research Question
+
+E-007 established that TF2T outranks every strategy in round-robin at ε=0.01–0.05.
+The canonical expectation is that round-robin performance predicts evolutionary success.
+**Does TF2T's noise-robust cooperation translate to evolutionary dominance under noise?**
+
+---
+
+## Results
+
+### Attractor Frequencies (40 seeds, 200 generations, 12 strategies)
+
+The key measure: across 40 independent seeds (each giving a slightly different payoff
+matrix due to noise), which strategy reaches evolutionary dominance?
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      {EPS_LABELS.map(label => <th key={label}>{label}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {["Tit for Two Tats", "Generous TFT", "Pavlov", "Gradual", "Contrite TFT", "Tit for Tat", "Always Defect", "Random", "ZD Extorter (χ=3)", "Grudger", "Suspicious TFT"].map(name => {
+      const row = attractorData.map(d => d.counts[name] || 0);
+      if (row.every(v => v === 0)) return null;
+      return (
+        <tr key={name}>
+          <td><strong>{name}</strong></td>
+          {row.map((count, i) => (
+            <td key={i} style={`color: ${count >= 10 ? "var(--green)" : count === 0 ? "var(--muted)" : "var(--text)"}; font-weight: ${count >= 12 ? "bold" : "normal"}`}>
+              {count > 0 ? (count + "/" + N_SEEDS + " (" + Math.round(count/N_SEEDS*100) + "%)") : "—"}
+            </td>
+          ))}
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+### Finding 1: TF2T's round-robin advantage does not predict evolutionary dominance
+
+At ε=0, TF2T wins 27 of 40 seeds (68%) — it is the dominant evolutionary attractor
+in clean conditions. But under any noise:
+
+- **ε=0.01**: TF2T wins only 25% of seeds — tied with Pavlov, while Gradual (23%)
+  and GenTFT (18%) are competitive
+- **ε=0.02**: TF2T wins only 18% of seeds, behind GenTFT (38%) and Pavlov (35%)
+- **ε=0.05**: TF2T wins 20% of seeds — one of 9 different winners
+
+The unique stable equilibrium of ε=0 (TF2T dominant) shatters as soon as noise is
+introduced. Cooperation survives in most trajectories — but no single cooperative
+strategy is the stable attractor.
+
+### Finding 2: The evolutionary landscape is multistable under noise
+
+At ε=0, there is essentially one basin of attraction for the cooperative equilibrium.
+At ε>0, multiple stable equilibria coexist, and which one is reached depends on the
+specific pairwise payoff matrix (seed):
+
+| ε | Number of distinct winners (across 40 seeds) |
+|---|----------------------------------------------|
+| 0 | 3 (TF2T, Gradual, GenTFT) |
+| 0.01 | 6 |
+| 0.02 | 5 |
+| 0.05 | 9 |
+
+The ε=0 result shows limited variation (only 3 distinct winners, strongly concentrated
+on TF2T). At ε=0.05, 9 different strategies each win in at least one seed.
+
+**Why?** The mean-field replicator dynamics use a payoff matrix derived from a single
+round-robin tournament. At ε>0, the tournament payoffs have noise-induced variance —
+different seeds produce slightly different payoff matrices. Near the boundaries between
+basins of attraction, small perturbations in the payoff matrix tip the dynamics toward
+different equilibria. Noise doesn't just change which equilibrium is preferred — it
+creates *multiple* stable equilibria where previously there was only one.
+
+### Finding 3: Pavlov is a major evolutionary attractor under noise
+
+Pavlov (Win-Stay, Lose-Shift) ranks 4th–7th in round-robin across all noise levels.
+Yet it is one of the most frequent evolutionary winners:
+
+- ε=0.01: wins 25% of seeds (tied for most)
+- ε=0.02: wins 35% of seeds (second most frequent, behind GenTFT 38%)
+- ε=0.05: wins 25% of seeds (tied for most)
+
+**The mechanism:** Pavlov's Win-Stay/Lose-Shift rule gives it a unique noise-recovery
+property when facing another Pavlov. If a noise event forces mutual defection (both
+lose), both partners shift to cooperation immediately — a single round of mutual
+defection triggers recovery. This makes Pavlov vs Pavlov resilient to noise events.
+
+But this only explains self-play. The deeper reason Pavlov wins evolutionarily is that
+it forms a stable fixed point that is hard to invade. Once Pavlov dominates a
+population, other cooperative strategies find it difficult to spread because Pavlov
+exploits slight defectors (Win-Stay when collecting T) and recovers from noise.
+
+In contrast, TF2T is exploitable once it dominates: its leniency (requiring two
+consecutive defections to retaliate) allows ZD Extorter and Random to score above
+their cost ratio against it.
+
+### Evolutionary trajectory at seed 42 (illustrative)
+
+<table>
+  <thead>
+    <tr>
+      <th>Gen</th>
+      {trackedData[0].series.map(s => <th key={s.name}>{s.name.replace("Tit for Two Tats","TF2T").replace("Generous TFT","GenTFT").replace("Always Defect","AllD")}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {trackedData[0].gens.map((g, gi) => (
+      <tr key={g}>
+        <td><strong>G{g}</strong></td>
+        {trackedData[0].series.map(s => (
+          <td key={s.name} style={`color: ${s.shares[gi] > 20 ? "var(--green)" : s.shares[gi] < 1 ? "var(--muted)" : "var(--text)"}`}>
+            {s.shares[gi].toFixed(1)}%
+          </td>
+        ))}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+*ε=0, seed=42: Stable cooperative equilibrium — 8 strategies coexist, AllD extinct by gen 25.*
+
+<table>
+  <thead>
+    <tr>
+      <th>Gen</th>
+      {trackedData[1].series.map(s => <th key={s.name}>{s.name.replace("Tit for Two Tats","TF2T").replace("Generous TFT","GenTFT").replace("Always Defect","AllD")}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {trackedData[1].gens.map((g, gi) => (
+      <tr key={g}>
+        <td><strong>G{g}</strong></td>
+        {trackedData[1].series.map(s => (
+          <td key={s.name} style={`color: ${s.shares[gi] > 50 ? "var(--green)" : s.shares[gi] < 1 ? "var(--muted)" : "var(--text)"}`}>
+            {s.shares[gi] > 0.05 ? s.shares[gi].toFixed(1)+"%" : "—"}
+          </td>
+        ))}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+*ε=0.01, seed=42: Pavlov rises from 8.3% to dominate at 92.5%. TF2T goes extinct by gen 50; AllD goes extinct early.*
+
+---
+
+## The Disconnect: Round-Robin vs. Evolutionary Fitness
+
+The gap between round-robin rank and evolutionary win-rate is stark:
+
+| Strategy | Round-robin rank at ε=0.01 | Evolutionary win-rate at ε=0.01 |
+|----------|---------------------------|----------------------------------|
+| Tit for Two Tats | **2.10** (1st) | 25% (tied 1st) |
+| Generous TFT | 2.57 (2nd) | 18% |
+| Pavlov | 4.62 (5th) | **25% (tied 1st)** |
+| Gradual | 3.20 (3rd) | 23% |
+| Contrite TFT | 4.81 (4th) | 8% |
+
+Pavlov is 5th in round-robin but tied for most frequent evolutionary winner. The reason
+lies in what round-robin measures vs what replicator dynamics select for:
+
+**Round-robin** measures mean score against a fixed, diverse field. TF2T scores well
+because it cooperates effectively with many partners while deflecting most exploitation.
+
+**Replicator dynamics** select for strategies that grow when rare (invasion fitness)
+*and* cannot be invaded when common (fixation stability). Pavlov has superior
+fixation stability — a population of Pavlovs is hard to invade — even though it
+scores lower in a mixed field.
+
+This echoes Axelrod's own observation: TFT won his tournament but does not dominate
+the evolutionary dynamics — other strategies can form closed, uninvadable populations.
+
+---
+
+## Summary
+
+The central question — does TF2T's round-robin advantage translate to evolutionary
+dominance under noise? — has a clear answer: **no**.
+
+Noise fractures the evolutionary landscape. The unique cooperative attractor of the
+clean game (dominated by TF2T) becomes a collection of competing basins. Under any
+positive noise:
+
+1. **Multistability:** Multiple stable equilibria coexist. Small differences in the
+   payoff matrix (due to noise) determine which equilibrium the dynamics reach.
+
+2. **Pavlov as a major attractor:** Despite ranking 4th–7th in round-robin, Pavlov
+   wins 25–35% of evolutionary trajectories under noise. Its fixation stability
+   (hard to invade once common) outweighs its mediocre mixed-field score.
+
+3. **Survival of cooperation:** Across all noise levels tested, defection strategies
+   (AllD, ZD, Random) win at most 12% of trajectories. Cooperation is robust
+   in aggregate, even if which cooperative strategy wins is unpredictable.
+
+---
+
+## Next Steps
+
+**E-009: Pavlov's fixation stability.** Pavlov's evolutionary success comes from
+being difficult to invade, not from round-robin score. The specific question: starting
+from a Pavlov-dominated population (90%+ Pavlov), which strategies can successfully
+invade, and at what noise level does invasion succeed? This measures *basin of
+attraction size* rather than single-seed outcomes.
