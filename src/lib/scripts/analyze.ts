@@ -8,11 +8,11 @@
 import { runRoundRobin } from "../engine/tournament.js";
 import { runMany } from "../engine/stats.js";
 import { runEvolution } from "../engine/evolution.js";
-import { allStrategies, contriteTFT, titForTat, generousTFT, titForTwoTats } from "../strategies/index.js";
+import { allStrategies, contriteTFT, titForTat, generousTFT, titForTwoTats, allCooperate, allDefect } from "../strategies/index.js";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const MODE: "single" | "variance" | "evolution" | "noise-sweep" | "ctft-comparison" | "ctft-evolution" = "ctft-evolution";
+const MODE: "single" | "variance" | "evolution" | "noise-sweep" | "ctft-comparison" | "ctft-evolution" | "e006-coop-field" | "e006-epsilon002" = "e006-epsilon002";
 
 const ROUNDS      = 200;
 const SEED        = 42;
@@ -253,5 +253,96 @@ if (MODE === "ctft-evolution") {
 }
 
 void contriteTFT; void titForTat; void generousTFT; void titForTwoTats;
+void allCooperate; void allDefect;
+
+// ─── E-006: CTFT in a cooperative field ──────────────────────────────────────
+
+if (MODE === "e006-coop-field") {
+  const coopField = [contriteTFT, titForTat, generousTFT, titForTwoTats, allCooperate, allDefect];
+  const NOISE_LEVELS = [0, 0.01, 0.05];
+  const SWEEP_RUNS   = 100;
+  const SWEEP_ROUNDS = 200;
+
+  console.log(`\n═══ E-006: Cooperative field {CTFT, TFT, GenTFT, TF2T, AllC, AllD}`);
+  console.log(`    ε ∈ {${NOISE_LEVELS.join(", ")}}, ${SWEEP_RUNS} seeds, ${SWEEP_ROUNDS} rds/match ═══\n`);
+
+  const results = NOISE_LEVELS.map(ε => runMany(coopField, SWEEP_ROUNDS, SWEEP_RUNS, 0, ε));
+  const baseOrder = results[0].stats.map(s => s.name);
+
+  console.log("Mean Score:\n");
+  console.log(L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join(""));
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+  for (const name of baseOrder) {
+    const row = L(name, 26) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanScore.toFixed(0), 9);
+    }).join("");
+    console.log(row);
+  }
+
+  console.log("\nMean Rank (lower = better):\n");
+  console.log(L("Strategy", 26) + NOISE_LEVELS.map(ε => R(`ε=${ε}`, 9)).join(""));
+  console.log("─".repeat(26 + NOISE_LEVELS.length * 9));
+  for (const name of baseOrder) {
+    const row = L(name, 26) + results.map(r => {
+      const s = r.stats.find(s => s.name === name)!;
+      return R(s.meanRank.toFixed(2), 9);
+    }).join("");
+    console.log(row);
+  }
+
+  console.log("\n─── Evolutionary dynamics in cooperative field ───\n");
+  for (const ε of NOISE_LEVELS) {
+    const evo = runEvolution(coopField, SWEEP_ROUNDS, 200, 42, ε);
+    const checkpoints = [0, 10, 25, 50, 100, 200];
+    console.log(`  ε=${ε}:`);
+    console.log("  " + L("Strategy", 24) + checkpoints.map(g => R(`G${g}`, 8)).join(""));
+    console.log("  " + "─".repeat(24 + checkpoints.length * 8));
+    for (let i = 0; i < evo.strategies.length; i++) {
+      const name = evo.strategies[i];
+      const row = "  " + L(name, 24) + checkpoints.map(g => {
+        const snap = evo.history[g];
+        return R((snap.shares[i] * 100).toFixed(1) + "%", 8);
+      }).join("");
+      console.log(row);
+    }
+    console.log();
+  }
+}
+
+// ─── E-006: ε=0.02 full-field evolution — does Random still dominate? ─────────
+
+if (MODE === "e006-epsilon002") {
+  const EVO_GENS    = 200;
+  const EVO_ROUNDS  = 200;
+  const NOISE_LEVEL = 0.02;
+
+  console.log(`\n═══ E-006: Full-field evolution at ε=${NOISE_LEVEL}`);
+  console.log(`    ${EVO_GENS} generations, seed=${SEED}, ${EVO_ROUNDS} rds/match ═══\n`);
+
+  const result = runEvolution(allStrategies, EVO_ROUNDS, EVO_GENS, SEED, NOISE_LEVEL);
+
+  const checkpoints = [0, 1, 5, 10, 25, 50, 100, 200].filter(g => g <= EVO_GENS);
+  console.log(L("Strategy", 26) + checkpoints.map(g => R(`G${g}`, 8)).join(""));
+  console.log("─".repeat(26 + checkpoints.length * 8));
+
+  for (let i = 0; i < result.strategies.length; i++) {
+    const name = result.strategies[i];
+    const row = L(name, 26) + checkpoints.map(g => {
+      const snap = result.history[g];
+      return R((snap.shares[i] * 100).toFixed(1) + "%", 8);
+    }).join("");
+    console.log(row);
+  }
+
+  console.log("\nFinal shares (sorted):");
+  const final = result.strategies
+    .map((name, i) => ({ name, share: result.finalShares[i] }))
+    .sort((a, b) => b.share - a.share);
+  for (const { name, share } of final) {
+    const bar = "█".repeat(Math.round(share * 80));
+    console.log(`  ${name.padEnd(26)} ${pct(share).padStart(7)}  ${bar}`);
+  }
+}
 
 console.log();

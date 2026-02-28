@@ -1,0 +1,301 @@
+---
+title: "Experiment 06: CTFT in Its Intended Environment, and the Phase Transition"
+date: 2026-02-28
+description: "We test Contrite TFT in a cooperative field (no Random, no ZD) and find it still ranks 4th — GenTFT sweeps to 91% at ε=0.05 even without exploitative strategies. A full-field evolution at ε=0.02 shows no Random invasion: the three-phase collapse from E-005 is a threshold phenomenon between ε=0.02 and ε=0.05. GenTFT is the dominant cooperative strategy across low-to-medium noise."
+tags: ["contrite-tft", "generous-tft", "evolutionary-dynamics", "phase-transition", "noise"]
+---
+
+import BarChart from "../../components/BarChart.astro";
+import { runMany } from "../../lib/engine/stats";
+import { runEvolution } from "../../lib/engine/evolution";
+import { allStrategies, contriteTFT, titForTat, generousTFT, titForTwoTats, allCooperate, allDefect } from "../../lib/strategies/index";
+
+export const coopField = [contriteTFT, titForTat, generousTFT, titForTwoTats, allCooperate, allDefect];
+export const NOISE_LEVELS = [0, 0.01, 0.05];
+export const results = NOISE_LEVELS.map(ε => runMany(coopField, 200, 100, 0, ε));
+export const baseOrder = results[0].stats.map(s => s.name);
+
+export const evo0   = runEvolution(coopField, 200, 200, 42, 0);
+export const evo01  = runEvolution(coopField, 200, 200, 42, 0.01);
+export const evo05  = runEvolution(coopField, 200, 200, 42, 0.05);
+export const evo002 = runEvolution(allStrategies, 200, 200, 42, 0.02);
+
+export const evo05Final = [...evo05.strategies.map((name, i) => ({
+  name, share: evo05.finalShares[i]
+}))].sort((a, b) => b.share - a.share).filter(s => s.share > 0.001);
+
+export const evo002Final = [...evo002.strategies.map((name, i) => ({
+  name, share: evo002.finalShares[i]
+}))].sort((a, b) => b.share - a.share).filter(s => s.share > 0.001);
+
+## Research Questions
+
+E-005 left two threads open:
+
+1. **CTFT in a cooperative field.** E-005 showed CTFT fails in a mixed field because
+   AllDefect and ZD Extorter exploit its contrition. But theory designed CTFT for
+   cooperative populations. The question: does CTFT win in a 6-strategy field of
+   `[CTFT, TFT, GenTFT, TF2T, AllCooperate, AllDefect]` — no Random, no ZD?
+
+2. **The evolutionary phase transition.** E-005 found a three-phase collapse at ε=0.05:
+   cooperation → Random parasitism → AllDefect invasion. Is this robust? Does it
+   appear at ε=0.02?
+
+## Experiment A: Cooperative Field Round-Robin
+
+### Mean Rank by Noise Level (lower = better, 100 seeds, 200 rounds/match)
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      {NOISE_LEVELS.map(ε => <th key={ε}>ε={ε}</th>)}
+    </tr>
+  </thead>
+  <tbody>
+    {baseOrder.map(name => (
+      <tr key={name}>
+        <td><strong>{name}</strong></td>
+        {results.map((r, ri) => {
+          const s = r.stats.find(s => s.name === name);
+          const isTop = s.meanRank <= 2;
+          const isBot = s.meanRank >= 5;
+          return (
+            <td key={ri} style={`color: ${isTop ? "var(--green)" : isBot ? "var(--red)" : "var(--text)"}`}>
+              {s.meanRank.toFixed(2)}
+            </td>
+          );
+        })}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+### Finding A1: CTFT is 4th even without Random and ZD
+
+In the cooperative field, CTFT ranks 4th at every noise level tested. The ordering
+at ε=0 is TFT(1) > TF2T(2) > GenTFT(3) > **CTFT(4)** > AllC(5) > AllD(6).
+
+The culprit remains AllDefect. Even without Random and ZD, AllDefect is present
+as a necessary benchmark, and CTFT's contrition mechanism creates a systematic
+disadvantage against it. CTFT vs AllDefect alternates C/D forever (average 0.5/round
+after round 1), while TFT locks into DD (average 1.0/round after round 1). In a
+6-strategy field, this one matchup costs CTFT enough to stay behind its
+cooperative competitors across all noise conditions.
+
+**The theory's assumption was too optimistic.** CTFT is designed for a world with
+no unconditional defectors — a world where everyone intends to cooperate and noise
+creates accidental mistakes. As long as a single always-defect strategy is present
+in the population, CTFT's contrition is exploited.
+
+## Experiment B: Evolutionary Dynamics in the Cooperative Field
+
+### ε=0: Stable cooperative equilibrium, CTFT participates
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>G0</th><th>G10</th><th>G25</th><th>G50</th><th>G100</th><th>G200</th>
+    </tr>
+  </thead>
+  <tbody>
+    {evo0.strategies.map((name, i) => (
+      <tr key={name}>
+        <td><strong>{name}</strong></td>
+        {[0,10,25,50,100,200].map(g => (
+          <td key={g}>{(evo0.history[g].shares[i]*100).toFixed(1)}%</td>
+        ))}
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+At ε=0, AllDefect goes extinct by generation 25. The five cooperative strategies
+reach a stable equilibrium: TFT(22.8%) ≈ TF2T(22.7%) > GenTFT(19.9%) > CTFT(18.9%)
+> AllCooperate(15.7%).
+
+**CTFT IS evolutionarily stable at ε=0 in the cooperative field.** It holds 18.9%
+of the population — similar to GenTFT (19.9%). In a world where all opponents intend
+to cooperate, CTFT's contrition mechanism is not exploited and the strategy participates
+in the cooperative equilibrium. Theory is correct in this specific scenario.
+
+### ε=0.01 and ε=0.05: GenTFT sweeps
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>G0</th><th>G10</th><th>G25</th><th>G50</th><th>G100</th><th>G200</th>
+    </tr>
+  </thead>
+  <tbody>
+    {evo01.strategies.map((name, i) => {
+      const finalShare = evo01.finalShares[i];
+      return (
+        <tr key={name}>
+          <td><strong>{name}</strong></td>
+          {[0,10,25,50,100,200].map(g => (
+            <td key={g} style={`color: ${finalShare > 0.30 ? "var(--green)" : finalShare < 0.02 ? "var(--red)" : "var(--text)"}`}>
+              {(evo01.history[g].shares[i]*100).toFixed(1)}%
+            </td>
+          ))}
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+At ε=0.01: GenTFT reaches 48% by generation 200. AllDefect goes extinct. CTFT
+falls to 0.9% — nearly extinct. TFT falls to 5.1%.
+
+<BarChart
+  labels={evo05Final.map(s => s.name)}
+  values={evo05Final.map(s => parseFloat((s.share * 100).toFixed(1)))}
+  height="200px"
+/>
+
+At ε=0.05: GenTFT reaches **91.1%** by generation 200. CTFT falls to 2.3%.
+TFT falls to 5.9%. AllCooperate falls to 0.5%.
+
+**GenTFT is the dominant cooperative strategy under noise.** Even in a field free
+of Random and ZD, Generous TFT completely sweeps CTFT and standard TFT once any
+noise is introduced. Its probabilistic forgiveness (33% chance of cooperating after
+opponent's defection) is more evolutionarily efficient than CTFT's deterministic
+contrition.
+
+Why? Consider the dynamics when a noise event occurs in a GenTFT vs CTFT interaction:
+
+- GenTFT vs GenTFT under noise: each noise defection is forgiven ~33% of the time,
+  keeping cooperation rates high. Long-run payoff stays near CC.
+- CTFT vs CTFT under noise: after a noise defection, both enter a 2-round
+  disruption (apologize and retaliate), then restore. Long-run payoff is also near
+  CC but with slightly more disruption.
+- GenTFT vs CTFT under noise: GenTFT's forgiveness benefits CTFT (CTFT gets forgiven);
+  CTFT's contrition benefits GenTFT (CTFT cooperates after its own retaliation). Both
+  do well.
+
+The key advantage: GenTFT can *prevent* spirals from starting (by not retaliating at
+all, 33% of the time), while CTFT only *resolves* spirals after they've begun (by
+cooperating after its own retaliation). Preventing is better than recovering.
+
+## Experiment C: Full-Field Evolution at ε=0.02
+
+Does the Random-mediated defector invasion from E-005 appear at ε=0.02?
+
+<table>
+  <thead>
+    <tr>
+      <th>Strategy</th>
+      <th>G0</th><th>G10</th><th>G25</th><th>G50</th><th>G100</th><th>G200</th>
+    </tr>
+  </thead>
+  <tbody>
+    {evo002.strategies.map((name, i) => {
+      const finalShare = evo002.finalShares[i];
+      return (
+        <tr key={name}>
+          <td><strong>{name}</strong></td>
+          {[0,10,25,50,100,200].map(g => (
+            <td key={g} style={`color: ${finalShare > 0.30 ? "var(--green)" : finalShare < 0.005 ? "var(--red)" : "var(--text)"}`}>
+              {(evo002.history[g].shares[i]*100).toFixed(1)}%
+            </td>
+          ))}
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
+At ε=0.02: **GenTFT wins with 94.4%**. No Random invasion. No defector comeback.
+AllDefect goes extinct by generation 25. Random falls to near-zero throughout.
+
+<BarChart
+  labels={evo002Final.map(s => s.name)}
+  values={evo002Final.map(s => parseFloat((s.share * 100).toFixed(1)))}
+  height="200px"
+/>
+
+The contrast with ε=0.05 is stark:
+
+| ε | Evolutionary outcome | GenTFT | AllDefect | Random |
+|---|---|---|---|---|
+| 0    | TFT/TF2T/GenTFT equilibrium | 19.9% | 0% | 0% |
+| 0.02 | GenTFT dominant | **94.4%** | 0% | 0% |
+| 0.05 | AllDefect + Grudger win | 0% | **76%** | 0%* |
+
+*Random spikes to 96% at generation 100 before collapsing.
+
+**The phase transition in evolutionary dynamics is narrow.** The cooperative
+equilibrium (GenTFT dominant) holds at ε=0.02 and collapses by ε=0.05. The
+transition occurs somewhere in the range ε=0.02–0.05. Identifying the critical
+noise level is the natural next experiment.
+
+## Analysis: What Makes GenTFT Evolutionarily Dominant?
+
+Across six experiments now, one result is consistent: GenTFT is the dominant
+cooperative strategy under noise. It leads round-robin at ε=0.01–0.05 (E-004),
+sweeps the cooperative field evolutionarily at ε=0.01 and ε=0.05 (this experiment),
+and dominates the full 11-strategy field at ε=0.02.
+
+The mechanism is subtle. GenTFT cooperates with probability 1 against cooperating
+opponents, and retaliates against defectors — but forgives about 1/3 of defections.
+This forgiveness rate (chosen to satisfy the "stay in cooperation despite noise"
+criterion) turns out to be nearly optimal across a wide noise range.
+
+Against other cooperators: GenTFT and other cooperative strategies get near-CC payoffs;
+GenTFT's occasional forgiveness breaks any noise-triggered spiral before it can propagate.
+
+Against defectors: GenTFT retaliates 67% of the time — enough to avoid exploitation
+while not locking into permanent DD.
+
+The evolutionary dynamics amplify this: once GenTFT is common, noise events are
+often forgiven, maintaining the high CC payoffs. Other strategies struggle to invade
+because they either:
+- Cooperate too rigidly (TFT, CTFT) → get caught in noise spirals
+- Are too exploitable (AllCooperate) → get suckered
+- Exploit too aggressively (AllDefect, Grudger) → get punished by GenTFT's 67%
+  retaliation
+
+GenTFT occupies a "Goldilocks" position: cooperative enough to thrive among cooperators,
+retaliatory enough to resist exploitation, forgiving enough to avoid noise spirals.
+
+## Conclusions
+
+1. **CTFT is evolutionarily stable at ε=0** in a cooperative field (~19% share)
+   — theory is correct in this specific scenario. But it requires a world with no
+   unconditional defectors.
+
+2. **CTFT is evolutionarily fragile under noise.** GenTFT sweeps CTFT even at
+   ε=0.01 in the cooperative field (CTFT falls to 0.9%). CTFT's contrition is
+   inferior to GenTFT's probabilistic forgiveness because preventing spirals is
+   better than recovering from them.
+
+3. **The three-phase collapse is a threshold phenomenon.** At ε=0.02, the full
+   11-strategy field reaches a stable cooperative equilibrium (GenTFT 94%).
+   At ε=0.05 it collapses to AllDefect dominance. The critical noise level is
+   somewhere in the range ε=0.02–0.05.
+
+4. **GenTFT is the dominant cooperative strategy across all tested noise levels**
+   in evolutionary dynamics (ε=0.01, 0.02, 0.05). It is the answer to "which
+   cooperative strategy is evolutionarily robust?"
+
+5. **The theoretical case for CTFT is narrower than claimed.** CTFT is beneficial
+   only in: (a) homogeneous populations with no defectors, and (b) round-robin
+   tournaments against TFT specifically at ε=0.01–0.05. Outside these conditions,
+   GenTFT strictly dominates CTFT.
+
+## Next Steps
+
+- **Locate the phase transition precisely.** E-006 shows the transition between
+  ε=0.02 (cooperative equilibrium) and ε=0.05 (defector dominance). Running
+  evolution at ε=0.03 and ε=0.04 would narrow the critical noise threshold.
+
+- **GenTFT forgiveness rate sweep.** The 33% forgiveness is the standard calibration.
+  Is it optimal? At ε=0.05, what forgiveness rate maximises evolutionary stability?
+  Could a "tuned" GenTFT survive the ε=0.05 transition?
+
+- **Why does Random rise at ε=0.05?** The Random-mediated route to defection
+  (E-005) doesn't appear at ε=0.02. Understanding exactly why Random becomes
+  parasitic at exactly that noise level would illuminate the mechanism of the
+  phase transition.

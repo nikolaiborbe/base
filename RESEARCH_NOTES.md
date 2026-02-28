@@ -35,7 +35,7 @@ strategies are robust, evolutionarily stable, and resistant to real-world noise.
 The goal is to produce findings that are reproducible, validated, and genuinely
 informative about cooperation under uncertainty.
 
-### What has been established (5 posts, 5 experiments)
+### What has been established (6 posts, 6 experiments)
 
 **E-001 — Baseline** (seed=42, 200 rounds, 10 strategies):
 Confirmed Axelrod's core result in our engine. Cooperative/retaliatory strategies
@@ -74,38 +74,41 @@ collapse**: cooperation rises (gen 0–50) → Random parasitism dominates (gen 
 96% at gen 100) → Always Defect invades the Random pool and wins (76% at gen 200,
 Grudger 24%). The cooperative equilibrium is evolutionarily unstable under noise.
 
+**E-006 — CTFT in cooperative field + ε=0.02 evolution** (cooperative field: 6 strategies; full-field evolution at ε=0.02):
+CTFT is still 4th even without Random/ZD — AllDefect alone is enough to penalize
+contrition. CTFT is evolutionarily stable at ε=0 (~19% in cooperative field) but
+GenTFT sweeps it at ε=0.01 (GenTFT→48%) and ε=0.05 (GenTFT→91%). **GenTFT is the
+dominant cooperative strategy under noise** — preventing spirals (probabilistic
+forgiveness) beats resolving them (contrition). Full-field ε=0.02 evolution: GenTFT
+wins with 94.4%, no Random invasion, no AllDefect comeback. The **evolutionary phase
+transition** (cooperative→defector) is between ε=0.02 and ε=0.05.
+
 ### The open scientific thread
 
-Four experiments in. The noise experiment answered its primary question but
-opened two new critical ones:
+Six experiments in. The core questions now are:
 
-> **Does the phase transition appear in evolutionary dynamics?** E-003 showed
-> exploiters go extinct at ε=0. Does this hold at ε=0.05? At what noise level
-> do defectors become evolutionarily stable?
+> **Where exactly is the evolutionary phase transition?** E-006 showed it's
+> between ε=0.02 (GenTFT wins 94%) and ε=0.05 (AllDefect wins 76%). The critical
+> noise threshold is somewhere in ε=0.02–0.05. Locating it precisely would reveal
+> the exact noise level at which cooperation becomes evolutionarily unsustainable.
 
-> **Can Contrite TFT span the full noise range?** Standard TFT collapses at
-> ε=0.01. Generous TFT collapses at ε=0.10. Theory predicts Contrite TFT —
-> which apologises for accidental defections — should be robust across the
-> whole range. This prediction has never been tested in this engine.
+> **Can GenTFT's forgiveness rate be tuned to extend stability?** The standard 33%
+> forgiveness is calibrated for specific payoff ratios. At ε=0.05, GenTFT collapses
+> evolutionarily. Could a tuned forgiveness rate (e.g., 40–50%) maintain cooperative
+> stability at higher noise?
 
 ---
 
-## Immediate Next Task — Experiment 06: CTFT in a Cooperative Field
+## Immediate Next Task — Experiment 07: Phase Transition Location
 
-**Research question:** E-005 showed CTFT fails in a mixed field because contrition
-is exploited by AllDefect and ZD. But CTFT was *designed* for cooperative populations.
-What happens in a CTFT+TFT+GenTFT+AllCooperate+AllDefect field (no Random, no ZD)?
-Does CTFT win in its intended environment?
-
-Also: the Random-mediated defector invasion at ε=0.05 is a novel finding — is it
-robust? Is it the same mechanism at ε=0.02?
+**Research question:** The evolutionary phase transition (cooperative→defector)
+is between ε=0.02 and ε=0.05. Where exactly?
 
 **Plan:**
-1. Run `runMany` and `runEvolution` on a 5-strategy cooperative field:
-   {CTFT, TFT, GenTFT, TF2T, AllCooperate, AllDefect} at ε ∈ {0, 0.01, 0.05}
-2. Check if CTFT wins evolutionary dynamics in that smaller field
-3. Run `runEvolution` at ε=0.02 with all 11 strategies — does Random still dominate?
-4. Write devlog post 06
+1. Run `runEvolution(allStrategies, 200, 200, 42, ε)` at ε ∈ {0.02, 0.03, 0.04, 0.05}
+2. Track GenTFT's final share and when Random/AllDefect start rising
+3. Find the critical ε where the cooperative equilibrium first fails
+4. Write devlog post 07
 
 ---
 
@@ -149,12 +152,11 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 
 ## Open Questions (ranked by scientific interest)
 
-1. **[NEXT] CTFT in a cooperative field** — Run CTFT+TFT+GenTFT+TF2T+AllC+AllD
-   (no Random/ZD). Does CTFT win in its intended environment? This tests whether
-   theory is right about the mechanism, just wrong about the field composition.
-2. **The Random-mediated invasion** — At ε=0.05 (E-005), Random dominated gen 50-100
-   then AllDefect took over. Is this robust across seeds? Does it appear at ε=0.02?
-   Is there any cooperative strategy that prevents Random from parasitizing?
+1. **[NEXT] Phase transition location** — ε=0.02 gives GenTFT 94%; ε=0.05 gives
+   AllDefect 76%. Run evolution at ε ∈ {0.02, 0.03, 0.04, 0.05} to find the critical
+   threshold where cooperation becomes evolutionarily unstable.
+2. **GenTFT forgiveness rate sweep** — Can a tuned forgiveness rate (30–50%) extend
+   cooperative stability into the ε=0.05–0.10 range? This is the core design question.
 3. **ZD χ-sweep** — at what χ does ZD become net-positive in round-robin?
    (χ=3 finishes 7th clean; its noise resilience is notable — worth exploring lower χ)
 4. **Pavlov under noise** — Pavlov ranks 3.69 at ε=0.05, 4.08 at ε=0.10 (stable).
@@ -173,6 +175,7 @@ the same rng into the flip decision) or the ε-sweep must use multi-seed runs.
 | E-003 | 2026-02-27 | Replicator dynamics, 200 generations   | seed=42, 200 rds     | Bottom 4 extinct by gen 50; cooperative equilibrium |
 | E-004 | 2026-02-28 | Noise sweep ε ∈ {0–0.15}, 100 seeds   | seeds 0–99, 200 rds  | GenTFT leads ε=0.01–0.05; phase transition at ε≈0.10; AllDefect leads at ε=0.15 |
 | E-005 | 2026-02-28 | Contrite TFT vs TFT vs GenTFT + evo   | ε ∈ {0,0.01,0.05,0.10}, 100 seeds; evo ε=0.05 seed=42 | CTFT ranks 4th at ε=0 (exploitable by AllD); beats TFT at ε=0.01–0.05 only; evo: Random→AllDefect takeover |
+| E-006 | 2026-02-28 | CTFT in cooperative field; ε=0.02 evo  | coop field 100 seeds; evo ε ∈ {0,0.01,0.05,0.02} seed=42 | CTFT 4th in coop field; GenTFT sweeps evo at ε=0.01 (48%) and ε=0.05 (91%); ε=0.02 full-field: GenTFT 94%, no invasion; phase transition between ε=0.02–0.05 |
 
 ---
 
@@ -295,5 +298,9 @@ src/content/devlog/           # 01, 02, 03 published posts (MDX)
   CTFT beats TFT at ε=0.01–0.05 only. Never beats GenTFT. Evolutionary dynamics at
   ε=0.05 show three-phase collapse: cooperation→Random (96% gen 100)→AllDefect (76%
   gen 200). Added `noise` param to `runEvolution`. 54 tests. 11 strategies.
-- **Next session must start with**: Experiment 06 — CTFT in a cooperative field
-  (CTFT+TFT+GenTFT+TF2T+AllC+AllD, no Random/ZD). Does CTFT win in its intended env?
+- **E-006**: CTFT in cooperative field (6-strategy). CTFT still 4th — AllDefect alone
+  penalizes it. GenTFT sweeps in cooperative-field evolution at ε=0.01 and ε=0.05
+  (91%!). Full-field ε=0.02 evolution: GenTFT 94.4%, no Random invasion. Phase
+  transition confirmed between ε=0.02 and ε=0.05.
+- **Next session must start with**: Experiment 07 — phase transition location. Run
+  evolution at ε ∈ {0.02, 0.03, 0.04, 0.05} to find the critical noise threshold.
